@@ -52,7 +52,7 @@ function TableHeader({
             {children}
             {sortBy[name] && (
                 <i
-                    className={`bi-chevron-${
+                    className={`bi-sort-${
                         sortBy[name] === "asc" ? "up" : "down"
                     } ml-3`}
                 ></i>

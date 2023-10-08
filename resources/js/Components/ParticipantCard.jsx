@@ -13,7 +13,7 @@ function ParticipantCard({
             {...props}
             onClick={onClick}
             className={twMerge(
-                "p-6 bg-white dark:bg-zinc-700 dark:text-white rounded-md shadow print:shadow-none print:border",
+                "p-6 bg-white dark:bg-gray-700 dark:text-white rounded-md shadow print:shadow-none print:border",
                 className
             )}
         >
@@ -27,7 +27,7 @@ function ParticipantCard({
                     <h3 className="text-lg font-bold inline-block">
                         {participant.name}
                     </h3>
-                    <span className="inline-block px-3 rounded-full text-gray-700 bg-gray-200 ml-2 text-sm dark:text-zinc-300 dark:bg-zinc-600">
+                    <span className="inline-block px-3 rounded-full text-gray-700 bg-gray-200 ml-2 text-sm dark:text-zinc-300 dark:bg-gray-600">
                         {participant.pronouns}
                     </span>
                     <span className="text-gray-700 dark:text-zinc-400 block">

@@ -46,7 +46,7 @@ export default forwardRef(function TimePicker(
                 />
             </Popover.Button>
             <Popover.Panel className="mt-3 absolute">
-                <div className="p-3 bg-white dark:bg-zinc-700 dark:text-white rounded-md">
+                <div className="p-3 bg-white dark:bg-gray-700 dark:text-white rounded-md">
                     Lorem, ipsum dolor sit amet consectetur adipisicing elit.
                     Aspernatur perferendis cum minima quod veritatis fuga neque
                     assumenda voluptatum delectus porro, consectetur nemo illum
