@@ -1,6 +1,16 @@
-import { forwardRef, useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useRef } from "react";
+import { twMerge } from "tailwind-merge";
 
-export default forwardRef(function TextInput({ type = 'text', className = '', isFocused = false, ...props }, ref) {
+export default forwardRef(function TextInput(
+    {
+        type = "text",
+        className = "",
+        isFocused = false,
+        disabled = false,
+        ...props
+    },
+    ref
+) {
     const input = ref ? ref : useRef();
 
     useEffect(() => {
@@ -12,11 +22,15 @@ export default forwardRef(function TextInput({ type = 'text', className = '', is
     return (
         <input
             {...props}
+            disabled={disabled}
             type={type}
-            className={
-                'border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm ' +
-                className
-            }
+            className={twMerge(
+                "border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm bg-transparent dark:text-white ",
+                className,
+                disabled
+                    ? "text-zinc-700 dark:text-zinc-400 cursor-not-allowed"
+                    : ""
+            )}
             ref={input}
         />
     );
