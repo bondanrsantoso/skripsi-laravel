@@ -19,7 +19,7 @@ function SortedTable({
 function TableHeader({
     children,
     className,
-    name,
+    name = "",
     sortable = false,
     ...props
 }) {

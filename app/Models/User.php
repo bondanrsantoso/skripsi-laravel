@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -42,4 +43,28 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function managedProjects(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            "project_managers",
+            "user_id",
+            "project_id",
+            "id",
+            "id"
+        );
+    }
+
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            "project_teams",
+            "user_id",
+            "project_id",
+            "id",
+            "id"
+        )->withPivot(["position", "expired_at"]);
+    }
 }
