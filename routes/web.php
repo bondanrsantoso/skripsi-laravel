@@ -3,6 +3,7 @@
 use App\Http\Controllers\ArtifactController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\BoardNoteController;
+use App\Http\Controllers\ChatInstanceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
@@ -48,6 +49,8 @@ Route::middleware(['auth'])->prefix("/dashboard")->group(function () {
     Route::resource("artifacts", ArtifactController::class)->middleware("upload:file,file_url");
 
     Route::resource("users", UserController::class);
+
+    Route::resource("chat_instances", ChatInstanceController::class);
 });
 
 Route::middleware('auth')->group(function () {
