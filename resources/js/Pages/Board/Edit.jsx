@@ -351,9 +351,9 @@ export default function BoardEditView({
                         onChange={(users) => {
                             setData(
                                 "users",
-                                users.sort(
-                                    (a, b) => b.pivot.role - a.pivot.role
-                                )
+                                users
+                                    .sort((a, b) => b.pivot.role - a.pivot.role)
+                                    .map((u) => u)
                             );
                             setShowCollaboratorEditor(false);
                         }}
@@ -401,7 +401,7 @@ export default function BoardEditView({
                                     ? "bg-gray-400"
                                     : "bg-emerald-400"
                             )}
-                            key={user.id}
+                            key={i}
                         >
                             <img
                                 src={user.photo_url}
