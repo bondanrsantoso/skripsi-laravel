@@ -4,7 +4,7 @@ import DangerButton from "@/Components/DangerButton";
 import SortedTable from "@/Components/Datatable";
 import SecondaryButton from "@/Components/SecondaryButton";
 import TextInput from "@/Components/TextInput";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import BoardLayout from "@/Layouts/BoardLayout";
 import { formatCurrency } from "@/lib/currencyFormat";
 import { Disclosure } from "@headlessui/react";
 import { Head, router, useForm } from "@inertiajs/react";
@@ -55,7 +55,7 @@ export default function ProjectDashboardView({
     }, [data.page]);
 
     return (
-        <AuthenticatedLayout
+        <BoardLayout
             // header={
             //     <div className="flex items-baseline flex-row gap-4">
             //         <h2 className="text-xl font-bold">
@@ -265,6 +265,6 @@ export default function ProjectDashboardView({
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </BoardLayout>
     );
 }

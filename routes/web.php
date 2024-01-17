@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\ArtifactController;
+use App\Http\Controllers\BoardController;
+use App\Http\Controllers\BoardNoteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
@@ -31,11 +34,18 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->prefix("/dashboard")->group(function () {
     Route::get('/', function (Request $request) {
-        $request->user()->load(['managedProjects', 'projects']);
-        return Inertia::render('Dashboard');
+        // $request->user()->load(['managedProjects', 'projects']);
+        // return Inertia::render('Dashboard');
+        return to_route("boards.index");
     })->name('dashboard');
 
     Route::resource("projects", ProjectController::class);
+
+    Route::resource("boards", BoardController::class);
+    Route::resource("boards.artifacts", ArtifactController::class)->middleware("upload:file,file_url");
+    Route::resource("boards.board_notes", BoardNoteController::class)->middleware("upload:file,file_url");
+
+    Route::resource("artifacts", ArtifactController::class)->middleware("upload:file,file_url");
 
     Route::resource("users", UserController::class);
 });

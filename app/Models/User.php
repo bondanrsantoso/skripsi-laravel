@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -44,6 +46,17 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    protected $appends = ["photo_url"];
+
+    protected function photoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value, $attributes) {
+                return "https://placehold.co/400x400/000000/FFF?text=" . strtoupper(substr($attributes["name"], 0, 1));
+            }
+        );
+    }
+
     public function managedProjects(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -66,5 +79,17 @@ class User extends Authenticatable
             "id",
             "id"
         )->withPivot(["position", "expired_at"]);
+    }
+
+    public function boards(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Board::class,
+            "board_collaborators",
+            "user_id",
+            "board_id",
+            "id",
+            "id"
+        );
     }
 }
