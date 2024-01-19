@@ -15,7 +15,7 @@ export default function QuillEditor({
             value={value}
             onChange={onChange}
             placeholder={placeholder}
-            className={twMerge("dark:!text-white")}
+            className={twMerge("dark:!text-white", className)}
             {...props}
         />
     );

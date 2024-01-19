@@ -16,7 +16,7 @@ class UploadMiddleware
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next, $inputField, $forwardField)
+    public function handle(Request $request, Closure $next, $inputField, $forwardField, $pathField = null)
     {
         Log::info("Upload", [
             $inputField => $forwardField,
@@ -35,6 +35,12 @@ class UploadMiddleware
             $request->merge([
                 $forwardField => $fileUrl,
             ]);
+
+            if ($pathField) {
+                $request->merge([
+                    $pathField => $path
+                ]);
+            }
         }
         return $next($request);
     }

@@ -540,9 +540,9 @@ export default function BoardEditView({
                     </div>
                 )}
             </div>
-            <div>
+            {/* <div>
                 <pre>{JSON.stringify(board, null, 2)}</pre>
-            </div>
+            </div> */}
             {/* <div></div> */}
         </BoardLayout>
     );

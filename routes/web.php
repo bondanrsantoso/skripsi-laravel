@@ -4,6 +4,7 @@ use App\Http\Controllers\ArtifactController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\BoardNoteController;
 use App\Http\Controllers\ChatInstanceController;
+use App\Http\Controllers\ChatMessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
@@ -24,12 +25,7 @@ use Inertia\Inertia;
 */
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return to_route("boards.index");
 });
 
 
@@ -43,14 +39,15 @@ Route::middleware(['auth'])->prefix("/dashboard")->group(function () {
     Route::resource("projects", ProjectController::class);
 
     Route::resource("boards", BoardController::class);
-    Route::resource("boards.artifacts", ArtifactController::class)->middleware("upload:file,file_url");
+    Route::resource("boards.artifacts", ArtifactController::class)->middleware("upload:file,file_url,file_path");
     Route::resource("boards.board_notes", BoardNoteController::class)->middleware("upload:file,file_url");
 
-    Route::resource("artifacts", ArtifactController::class)->middleware("upload:file,file_url");
+    Route::resource("artifacts", ArtifactController::class)->middleware("upload:file,file_url,file_path");
 
     Route::resource("users", UserController::class);
 
     Route::resource("chat_instances", ChatInstanceController::class);
+    Route::resource("chat_instances.chat_messages", ChatMessageController::class);
 });
 
 Route::middleware('auth')->group(function () {

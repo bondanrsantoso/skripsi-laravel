@@ -68,6 +68,10 @@ class BoardController extends Controller
      */
     public function edit(Request $request, Board $board)
     {
+        if (!$board->users()->find($request->user()->id)) {
+            return to_route("boards.index");
+        }
+
         $board->load(["users"]);
         $board->append(["items", "is_editable"]);
 

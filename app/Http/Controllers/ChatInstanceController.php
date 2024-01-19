@@ -21,7 +21,10 @@ class ChatInstanceController extends Controller
          * @var User
          */
         $user = $request->user();
-        $instances = $user->chats()->orderBy("updated_at", "desc")->paginate(10);
+        $instances = $user->chats()
+            ->with(["user"])
+            ->orderBy("updated_at", "desc")
+            ->paginate(10);
 
         return response()->json($instances);
     }
@@ -39,7 +42,13 @@ class ChatInstanceController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        /**
+         * @var User
+         */
+        $user = $request->user();
+        $newInstance = $user->chats()->create([]);
+
+        return to_route("chat_instances.show", ["chat_instance" => $newInstance->id]);
     }
 
     /**
@@ -47,7 +56,9 @@ class ChatInstanceController extends Controller
      */
     public function show(ChatInstance $chatInstance)
     {
-        //
+        $chatInstance->load(["messages", "user"]);
+
+        return response()->json($chatInstance);
     }
 
     /**

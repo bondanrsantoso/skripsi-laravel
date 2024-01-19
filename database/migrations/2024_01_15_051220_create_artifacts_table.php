@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('artifacts', function (Blueprint $table) {
             $table->id();
             $table->string("filename");
+            $table->text("path");
             $table->text("url");
             $table->string("mime_type");
             $table->longText("text_content")->nullable();

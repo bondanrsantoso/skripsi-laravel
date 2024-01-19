@@ -30,7 +30,7 @@ class ChatMessageController extends Controller
             });
         }
 
-        $messages = collect($messagesQuery->get())->reverse();
+        $messages = collect($messagesQuery->get())->reverse()->values();
 
         return response()->json($messages);
     }

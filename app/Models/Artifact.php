@@ -13,9 +13,27 @@ class Artifact extends Model
 {
     use HasFactory;
 
+    const MIME_PDF = 'application/pdf';
+    const MIME_XLSX =
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const MIME_XLS = 'application/vnd.ms-excel';
+    const MIME_DOCX =
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const MIME_DOC = 'application/msword';
+    const MIME_PPTX =
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    const MIME_PPT = 'application/vnd.ms-powerpoint';
+    const MIME_HTML = 'text/html';
+    const MIME_XML = 'application/xml';
+    const MIME_JSON = 'application/json';
+    const MIME_CSV = 'text/csv';
+    const MIME_TXT = 'text/plain';
+
+
     protected $fillable = [
         "filename",
         "url",
+        "path",
         "mime_type",
         "text_content",
         "owner_id",

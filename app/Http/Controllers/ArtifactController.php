@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\IndexDocument;
 use App\Models\Artifact;
 use App\Models\Board;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ArtifactController extends Controller
 {
@@ -31,6 +33,7 @@ class ArtifactController extends Controller
     {
         $valid = $request->validate([
             "file_url" => "required|string",
+            "file_path" => "required|string",
             "file" => "required|file",
             "order" => "nullable|integer|min:0",
         ]);
@@ -46,9 +49,21 @@ class ArtifactController extends Controller
         $newArtifactData = [
             "filename" => $filename,
             "url" => $request->input("file_url"),
+            "path" => $request->input("file_path"),
             "owner_id" => $request->user()->id,
             "mime_type" => $mime,
         ];
+
+        if (collect([
+            Artifact::MIME_CSV,
+            Artifact::MIME_JSON,
+            Artifact::MIME_HTML,
+            Artifact::MIME_XML,
+            Artifact::MIME_TXT,
+        ])->contains($mime)) {
+            $newArtifactData["text_content"] =
+                file_get_contents(Storage::path($request->input("file_path")));
+        }
 
         if ($board !== null) {
             $artifact = $board->artifacts()->create($newArtifactData, [
@@ -56,6 +71,23 @@ class ArtifactController extends Controller
             ]);
         } else {
             $artifact = Artifact::create($newArtifactData);
+        }
+
+
+        if (collect([
+            Artifact::MIME_DOCX,
+            Artifact::MIME_PDF,
+            Artifact::MIME_CSV,
+            Artifact::MIME_JSON,
+            Artifact::MIME_PPTX,
+            Artifact::MIME_HTML,
+            Artifact::MIME_XML,
+            Artifact::MIME_TXT,
+        ])->contains($mime)) {
+            $indexingJob = (new IndexDocument($artifact))
+                ->onQueue("artifact_index");
+
+            dispatch($indexingJob);
         }
 
         if ($request->expectsJson()) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import NavLink from "@/Components/NavLink";
@@ -6,6 +6,237 @@ import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Link } from "@inertiajs/react";
 import { Menu } from "@headlessui/react";
 import { twMerge } from "tailwind-merge";
+import SecondaryButton from "@/Components/SecondaryButton";
+import axios from "axios";
+import dayjs from "dayjs";
+import LocalizedFormat from "dayjs/esm/plugin/localizedFormat";
+import TextInput from "@/Components/TextInput";
+import PrimaryButton from "@/Components/PrimaryButton";
+import QuillEditor from "@/Components/QuillEditor";
+import Spinner from "@/Components/Spinner";
+
+dayjs.extend(LocalizedFormat);
+
+const ROLE_HUMAN = "human";
+const ROLE_AI = "ai";
+
+function ChatView({ user, ...props }) {
+    const [chatInstances, setChatInstances] = useState([]);
+    const [selectedInstances, setSelectedInstances] = useState(null);
+
+    const [chatMessages, setChatMessages] = useState([]);
+    const [showChat, setShowChat] = useState(false);
+
+    const [userChat, setUserChat] = useState("");
+
+    const [isSendingChat, setIsSendingChat] = useState(false);
+
+    useEffect(() => {
+        if (selectedInstances === null) {
+            axios.get(route("chat_instances.index")).then((res) => {
+                console.log(res.data);
+                setChatInstances(res.data?.data || []);
+            });
+        }
+    }, [selectedInstances]);
+
+    function createNewInstance() {
+        axios
+            .post(
+                route("chat_instances.store"),
+                {},
+                {
+                    withCredentials: true,
+                    headers: { Accept: "application/json" },
+                }
+            )
+            .then((res) => {
+                setSelectedInstances(res.data);
+            });
+    }
+
+    useEffect(() => {
+        if (selectedInstances) {
+            axios
+                .get(
+                    route("chat_instances.chat_messages.index", {
+                        chat_instance: selectedInstances.id,
+                    }),
+                    { withCredentials: true }
+                )
+                .then((res) => {
+                    console.log(res.data);
+                    setChatMessages(res.data);
+                });
+        }
+    }, [selectedInstances]);
+
+    function sendChat() {
+        setIsSendingChat(true);
+        axios
+            .post(
+                route("chat_instances.chat_messages.store", {
+                    chat_instance: selectedInstances.id,
+                }),
+                { content: userChat, role: ROLE_HUMAN },
+                {
+                    withCredentials: true,
+                    headers: { Accept: "application/json" },
+                }
+            )
+            .then((res) => {
+                const sentMessage = res.data;
+                const messages = chatMessages.slice(0);
+                messages.push(sentMessage);
+
+                setChatMessages(messages);
+                setUserChat("");
+            })
+            .finally(() => {
+                setIsSendingChat(false);
+            });
+    }
+
+    return (
+        <aside className="fixed bg-white dark:bg-gray-800 bottom-0 right-10 z-10 w-full md:w-1/2 2xl:w-1/3">
+            <SecondaryButton
+                type="button"
+                className="border border-b-0 rounded-b-none rounded-t-lg w-full flex flex-row gap-2 items-baseline text-sm"
+                onClick={() => {
+                    setShowChat((on) => !on);
+                }}
+            >
+                <i className="bi-chat"></i>
+                <p>AI Chat</p>
+            </SecondaryButton>
+            {showChat && selectedInstances && (
+                <div className="w-full border-x border-t border-gray-300 p-4 relative space-y-4">
+                    <div className="min-h-[40vh] max-h-[80vh] flex flex-col justify-end overflow-y-scroll gap-4">
+                        {chatMessages.map((chat, iChat) =>
+                            chat.role === ROLE_AI ? (
+                                <div
+                                    key={iChat}
+                                    className="px-2 border-s-4 border-pink-500"
+                                >
+                                    <div className="space-y-1">
+                                        <div className="flex flex-row gap-4">
+                                            <div className="capitalize text-pink-700 dark:text-pink-300 text-sm font-bold">
+                                                AI
+                                            </div>
+                                            <div className="text-xs opacity-50">
+                                                {dayjs(chat.created_at).format(
+                                                    "lll"
+                                                )}
+                                            </div>
+                                        </div>
+                                        <p>{chat.content}</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div
+                                    key={iChat}
+                                    className="flex flex-row px-2 border-s-4 border-gray-500"
+                                >
+                                    <div className="space-y-1">
+                                        <div className="flex flex-row gap-4 items-end">
+                                            <div className="capitalize text-gray-700 dark:text-gray-300 text-sm font-bold flex flex-row items-center gap-2">
+                                                <img
+                                                    src={user.photo_url}
+                                                    alt={user.name}
+                                                    className="rounded-full w-6 h-6"
+                                                />
+                                                <p>{user.name}</p>
+                                            </div>
+                                            <div className="text-xs opacity-50">
+                                                {dayjs(chat.created_at).format(
+                                                    "lll"
+                                                )}
+                                            </div>
+                                        </div>
+                                        <p>{chat.content}</p>
+                                    </div>
+                                </div>
+                            )
+                        )}
+                    </div>
+                    <div className="w-full px-4 pb-2 gap-4 flex flex-row items-stretch">
+                        <SecondaryButton
+                            type="button"
+                            className="rounded-full border border-gray-300"
+                            onClick={() => {
+                                setSelectedInstances(null);
+                                setChatMessages([]);
+                            }}
+                        >
+                            <i className="bi-chevron-left"></i>
+                        </SecondaryButton>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+
+                                sendChat();
+                            }}
+                            className="w-full flex flex-row flex-nowrap gap-4"
+                            id="chat-form"
+                        >
+                            <TextInput
+                                value={userChat}
+                                onChange={(e) => setUserChat(e.target.value)}
+                                className="w-full rounded-md border border-gray-300"
+                                disabled={isSendingChat}
+                            />
+                        </form>
+                        <PrimaryButton
+                            type="submit"
+                            className="rounded-full"
+                            form="chat-form"
+                            disabled={isSendingChat}
+                        >
+                            {/* <i className="bi-send text-lg"></i> */}
+                            {isSendingChat ? <Spinner /> : <span>Kirim</span>}
+                        </PrimaryButton>
+                    </div>
+                </div>
+            )}
+            {showChat && selectedInstances === null && (
+                <div className="w-full border-x border-t border-gray-300">
+                    {(!chatInstances || chatInstances.length === 0) && (
+                        <div className="p-4 opacity-75">
+                            Belum ada <i>chat</i> tersimpan.
+                        </div>
+                    )}
+                    {chatInstances.map((instance, iInstance) => (
+                        <SecondaryButton
+                            type="button"
+                            key={iInstance}
+                            onClick={() => setSelectedInstances(instance)}
+                            className="text-left w-full rounded-none flex gap-2"
+                        >
+                            <p># </p>
+                            <p className="truncate">
+                                {instance.title ||
+                                    dayjs(instance.created_at).format("LLL")}
+                            </p>
+                        </SecondaryButton>
+                    ))}
+
+                    <SecondaryButton
+                        type="button"
+                        onClick={() => {
+                            createNewInstance();
+                        }}
+                        className="text-left w-full rounded-none flex gap-2"
+                    >
+                        <i className="bi-plus-lg"></i>
+                        <p className="truncate">
+                            Mulai <i>chat</i> baru
+                        </p>
+                    </SecondaryButton>
+                </div>
+            )}
+        </aside>
+    );
+}
 
 export default function BoardLayout({
     user,
@@ -21,97 +252,6 @@ export default function BoardLayout({
 
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-950 dark:text-white">
-            {/* <nav className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-                <div className="mx-auto px-2">
-                    <div className="flex justify-between h-16">
-                        <div className="flex items-center">
-                            <div className="ml-3 relative"></div>
-                        </div>
-
-                        <div className="-mr-2 flex items-center sm:hidden">
-                            <button
-                                onClick={() =>
-                                    setShowingNavigationDropdown(
-                                        (previousState) => !previousState
-                                    )
-                                }
-                                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-900 focus:text-gray-500 dark:focus:text-gray-400 transition duration-150 ease-in-out"
-                            >
-                                <svg
-                                    className="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        className={
-                                            !showingNavigationDropdown
-                                                ? "inline-flex"
-                                                : "hidden"
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        className={
-                                            showingNavigationDropdown
-                                                ? "inline-flex"
-                                                : "hidden"
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    className={
-                        (showingNavigationDropdown ? "block" : "hidden") +
-                        " sm:hidden"
-                    }
-                >
-                    <div className="pt-2 pb-3 space-y-1">
-                        <ResponsiveNavLink
-                            href={route("dashboard")}
-                            active={route().current("dashboard")}
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <div className="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
-                        <div className="px-4">
-                            <div className="font-medium text-base text-gray-800 dark:text-gray-200">
-                                {user.name}
-                            </div>
-                            <div className="font-medium text-sm text-gray-500">
-                                {user.email}
-                            </div>
-                        </div>
-
-                        <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route("profile.edit")}>
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                method="post"
-                                href={route("logout")}
-                                as="button"
-                            >
-                                Log Out
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
-                </div>
-            </nav> */}
-
             {header && (
                 <header className="bg-white dark:bg-gray-800 shadow">
                     <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -119,6 +259,8 @@ export default function BoardLayout({
                     </div>
                 </header>
             )}
+
+            <ChatView user={user} />
 
             <main>
                 <div className="w-full mx-auto">
