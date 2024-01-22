@@ -381,7 +381,7 @@ export default function BoardLayout({
                             </div>
                         </div>
                         <div className="col-span-12 lg:col-span-9 xl:col-span-10 bg-gray-100 dark:bg-gray-950">
-                            <div className="max-w-5xl mx-auto mt-48 relative">
+                            <div className="max-w-5xl mx-auto my-48 relative pr-4">
                                 {children}
                             </div>
                         </div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Board;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,7 +12,7 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, Board $board = null)
     {
         $request->mergeIfMissing([
             // "fields" => ["*"],
@@ -35,6 +36,10 @@ class UserController extends Controller
         ]);
 
         $userQuery = User::select(["*"]);
+
+        if ($board !== null) {
+            $userQuery = $board->users();
+        }
 
         if ($request->filled("search")) {
             $search = $request->input("search");

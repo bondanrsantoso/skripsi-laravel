@@ -90,4 +90,9 @@ class Board extends Model
             return $items->values();
         });
     }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class, "board_id", "id");
+    }
 }

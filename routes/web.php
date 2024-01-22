@@ -8,6 +8,7 @@ use App\Http\Controllers\ChatInstanceController;
 use App\Http\Controllers\ChatMessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
@@ -42,6 +43,8 @@ Route::middleware(['auth'])->prefix("/dashboard")->group(function () {
     Route::resource("boards", BoardController::class);
     Route::resource("boards.artifacts", ArtifactController::class)->middleware("upload:file,file_url,file_path");
     Route::resource("boards.board_notes", BoardNoteController::class)->only(["store", "update"])->middleware("upload:file,file_url");
+    Route::resource("boards.tasks", TaskController::class);
+    Route::resource("boards.users", UserController::class)->only(["index"]);
 
     Route::resource("artifacts", ArtifactController::class)->middleware("upload:file,file_url,file_path");
 
