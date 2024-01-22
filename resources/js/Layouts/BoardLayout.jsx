@@ -20,7 +20,7 @@ dayjs.extend(LocalizedFormat);
 const ROLE_HUMAN = "human";
 const ROLE_AI = "ai";
 
-function ChatView({ user, ...props }) {
+function ChatView({ user, activeBoardId = null, ...props }) {
     const [chatInstances, setChatInstances] = useState([]);
     const [selectedInstances, setSelectedInstances] = useState(null);
 
@@ -30,6 +30,7 @@ function ChatView({ user, ...props }) {
     const [userChat, setUserChat] = useState("");
 
     const [isSendingChat, setIsSendingChat] = useState(false);
+    const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
 
     useEffect(() => {
         if (selectedInstances === null) {
@@ -94,8 +95,39 @@ function ChatView({ user, ...props }) {
             })
             .finally(() => {
                 setIsSendingChat(false);
+                setIsWaitingForAnswer(true);
             });
     }
+
+    useEffect(() => {
+        if (
+            chatMessages.length > 0 &&
+            chatMessages[chatMessages.length - 1].role === ROLE_HUMAN &&
+            isWaitingForAnswer
+        ) {
+            axios
+                .post(
+                    route("chat.answer", { instance: selectedInstances.id }),
+                    { board_id: activeBoardId },
+                    {
+                        withCredentials: true,
+                        headers: { Accept: "application/json" },
+                    }
+                )
+                .then((res) => {
+                    const messages = chatMessages.slice(0);
+                    messages.push(res.data);
+
+                    setChatMessages(messages);
+                })
+                .catch((err) => {
+                    console.error(err);
+                })
+                .finally(() => {
+                    setIsWaitingForAnswer(false);
+                });
+        }
+    }, [isWaitingForAnswer, chatMessages]);
 
     return (
         <aside className="fixed bg-white dark:bg-gray-800 bottom-0 right-10 z-10 w-full md:w-1/2 2xl:w-1/3">
@@ -157,6 +189,18 @@ function ChatView({ user, ...props }) {
                                     </div>
                                 </div>
                             )
+                        )}
+                        {isWaitingForAnswer && (
+                            <div className="flex flex-row px-2 border-s-4 border-gray-500">
+                                <div className="space-y-1">
+                                    <div className="flex flex-row gap-4 items-end">
+                                        <div className="capitalize text-gray-700 dark:text-gray-300 text-sm font-bold flex flex-row items-center gap-2">
+                                            <p>System</p>
+                                        </div>
+                                    </div>
+                                    <p>Menunggu jawaban...</p>
+                                </div>
+                            </div>
                         )}
                     </div>
                     <div className="w-full px-4 pb-2 gap-4 flex flex-row items-stretch">
@@ -260,7 +304,7 @@ export default function BoardLayout({
                 </header>
             )}
 
-            <ChatView user={user} />
+            <ChatView user={user} activeBoardId={selectedBoard?.id} />
 
             <main>
                 <div className="w-full mx-auto">
@@ -378,8 +422,11 @@ function SidebarLink({
 }) {
     return (
         <SidebarItem className={className}>
-            <Link className="flex flex-row gap-2 items-baseline" href={href}>
-                <div className="w-6 h-6 flex justify-center items-baseline">
+            <Link
+                className="flex flex-row gap-2 justify-start items-baseline"
+                href={href}
+            >
+                <div className="w-6 h-6 shrink-0 flex justify-center items-baseline">
                     {icon}
                 </div>
                 {children}

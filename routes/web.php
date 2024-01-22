@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ArtifactContextController;
 use App\Http\Controllers\ArtifactController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\BoardNoteController;
@@ -40,7 +41,7 @@ Route::middleware(['auth'])->prefix("/dashboard")->group(function () {
 
     Route::resource("boards", BoardController::class);
     Route::resource("boards.artifacts", ArtifactController::class)->middleware("upload:file,file_url,file_path");
-    Route::resource("boards.board_notes", BoardNoteController::class)->middleware("upload:file,file_url");
+    Route::resource("boards.board_notes", BoardNoteController::class)->only(["store", "update"])->middleware("upload:file,file_url");
 
     Route::resource("artifacts", ArtifactController::class)->middleware("upload:file,file_url,file_path");
 
@@ -55,5 +56,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+Route::resource("boards.artifact_contexts", ArtifactContextController::class);
+Route::resource("boards.board_notes", BoardNoteController::class)->only(["index"]);
+Route::resource("artifact_contexts", ArtifactContextController::class);
+Route::resource("board_notes", BoardNoteController::class)->only(["index"]);
+
 
 require __DIR__ . '/auth.php';

@@ -70,6 +70,14 @@ export default function BoardItem({
                             >
                                 Unduh berkas
                             </SecondaryButton>
+                            <SecondaryButton
+                                as="a"
+                                href={route("artifacts.show", {
+                                    artifact: item.id,
+                                })}
+                            >
+                                Lihat detail
+                            </SecondaryButton>
                         </div>
                     </div>
                 </Card>

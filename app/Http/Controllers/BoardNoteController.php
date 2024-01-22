@@ -11,9 +11,30 @@ class BoardNoteController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request, Board $board = null)
     {
-        //
+        if ($request->server("REMOTE_ADDR") !== "127.0.0.1") {
+            abort(400);
+        }
+
+        $valid = $request->validate([
+            "search" => "nullable|string"
+        ]);
+
+        $search = $request->input("search", "");
+
+        $contextQuery = BoardNote::select(["*"])
+            ->where(function ($q) use ($search) {
+                $q->where("content", "like", "%{$search}%");
+            });
+
+        if ($board !== null) {
+            $contextQuery->where("board_id", "=", $board->id);
+        }
+
+        $contexts = $contextQuery->paginate(20);
+
+        return response()->json($contexts);
     }
 
     /**

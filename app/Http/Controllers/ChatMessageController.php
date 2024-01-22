@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Board;
 use App\Models\ChatInstance;
 use App\Models\ChatMessage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class ChatMessageController extends Controller
 {
@@ -99,5 +101,29 @@ class ChatMessageController extends Controller
     public function destroy(ChatMessage $chatMessage)
     {
         //
+    }
+
+    public function askAnswer(Request $request, string $instance)
+    {
+        $chatInstance = ChatInstance::find($instance);
+
+        $messages = collect($chatInstance->messages);
+        $lastMessage = $messages->pop();
+
+        $url = env("AI_BACKEND_BASEURL", "http://localhost:6996");
+        $url .= "/chat/getAnswer";
+
+        $chatBotResponse = Http::timeout(90)->post($url, [
+            "prompt" => $lastMessage !== null ? $lastMessage->content : "Halo ini adalah pesan tes",
+            "history" => $messages,
+            "board_id" => $request->input("board_id", null)
+        ]);
+
+        $message = $chatInstance->messages()->create([
+            "content" => $chatBotResponse->json("output", "Gagal memproses output AI"),
+            "role" => ChatMessage::ROLE_AI,
+        ]);
+
+        return response()->json($message);
     }
 }

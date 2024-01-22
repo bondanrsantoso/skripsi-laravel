@@ -42,9 +42,6 @@ class BoardController extends Controller
         } catch (\Throwable $th) {
             throw $th;
         }
-        // return Inertia::render("Board/Edit", [
-        //     "boards" => Board::select(["id", "title"])->get(),
-        // ]);
     }
 
     /**

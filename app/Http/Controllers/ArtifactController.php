@@ -7,6 +7,7 @@ use App\Models\Artifact;
 use App\Models\Board;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class ArtifactController extends Controller
 {
@@ -101,9 +102,15 @@ class ArtifactController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Artifact $artifact)
+    public function show(Request $request, Artifact $artifact)
     {
-        //
+        $artifact->load(["contexts", "owner"]);
+
+        return Inertia::render("Artifact/View", [
+            "boards" => Board::whereRelation("users", "users.id", $request->user()->id)
+                ->select(["boards.id", "title"])->get(),
+            "artifact" => $artifact
+        ]);
     }
 
     /**

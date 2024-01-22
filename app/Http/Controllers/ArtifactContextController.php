@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Artifact;
 use App\Models\ArtifactContext;
+use App\Models\Board;
 use Illuminate\Http\Request;
 
 class ArtifactContextController extends Controller
@@ -10,9 +12,55 @@ class ArtifactContextController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request, Board $board = null)
     {
-        //
+        if ($request->server("REMOTE_ADDR") !== "127.0.0.1") {
+            abort(400);
+        }
+
+        $valid = $request->validate([
+            "search" => "nullable|string"
+        ]);
+
+        $search = $request->input("search", "");
+
+        $contextQuery = ArtifactContext::select(["*"]);
+        if ($board !== null) {
+            $contextQuery->whereRelation("artifact.boards", "boards.id", "=", $board->id);
+        }
+
+        if ($request->filled("search")) {
+            $contextQuery->where(function ($q) use ($search) {
+                $q->whereRaw("MATCH(value) AGAINST(?)", [$search])
+                    ->orWhere("field", "like", "%{$search}%");
+            });
+        }
+
+        $contexts = $contextQuery->select(["field", "value", "artifact_id"])
+            ->take(10)
+            ->get();
+
+        // $artifacts = [];
+        // $artifactIndex = [];
+        // foreach ($contexts as $i => $context) {
+        //     if (
+        //         sizeof($artifactIndex) === 0 ||
+        //         !isset($artifactIndex[$context->artifact_id])
+        //     ) {
+        //         // if there's no relevant artifact wrapper yet
+        //         $artifact = $context->artifact()->select(["id", "filename", "url"])->first();
+        //         $artifact->contexts = collect();
+
+        //         $artifactIndex[$artifact->id] = $i;
+        //         $artifacts[] = $artifact;
+        //     }
+
+        //     $artifacts[$artifactIndex[$context->artifact_id]]->contexts->push($context);
+        // }
+
+        // $relevantArtifacts = collect();
+
+        return response()->json($contexts);
     }
 
     /**
