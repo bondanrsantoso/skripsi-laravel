@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -16,6 +17,9 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    const ROLE_USER = 0;
+    const ROLE_ADMIN = 1;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -25,6 +29,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        "photo_url"
     ];
 
     /**
@@ -47,13 +52,14 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    protected $appends = ["photo_url"];
+    // protected $appends = ["photo_url"];
 
     protected function photoUrl(): Attribute
     {
         return Attribute::make(
             get: function ($value, $attributes) {
-                return "https://placehold.co/400x400/000000/FFF?text=" . strtoupper(substr($attributes["name"], 0, 1));
+                $photo = $value ?: "https://placehold.co/400x400/000000/FFF?text=" . strtoupper(substr($attributes["name"], 0, 1));
+                return url($photo);
             }
         );
     }
@@ -97,5 +103,15 @@ class User extends Authenticatable
     public function chats(): HasMany
     {
         return $this->hasMany(ChatInstance::class, "user_id", "id");
+    }
+
+    public function superior(): BelongsTo
+    {
+        return $this->belongsTo(User::class, "superior_id", "id");
+    }
+
+    public function subordinate(): HasMany
+    {
+        return $this->hasMany(User::class, "superior_id", "id");
     }
 }

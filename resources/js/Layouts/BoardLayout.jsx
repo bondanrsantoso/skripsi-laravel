@@ -14,8 +14,11 @@ import TextInput from "@/Components/TextInput";
 import PrimaryButton from "@/Components/PrimaryButton";
 import QuillEditor from "@/Components/QuillEditor";
 import Spinner from "@/Components/Spinner";
+import DOMPurify from "dompurify";
 
 dayjs.extend(LocalizedFormat);
+
+// window.DOMPurify = DOMPurify;
 
 const ROLE_HUMAN = "human";
 const ROLE_AI = "ai";
@@ -161,7 +164,13 @@ function ChatView({ user, activeBoardId = null, ...props }) {
                                                 )}
                                             </div>
                                         </div>
-                                        <p>{chat.content}</p>
+                                        <div
+                                            dangerouslySetInnerHTML={{
+                                                __html: DOMPurify.sanitize(
+                                                    chat.content
+                                                ),
+                                            }}
+                                        ></div>
                                     </div>
                                 </div>
                             ) : (
@@ -294,6 +303,21 @@ export default function BoardLayout({
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
+    const [boardList, setBoardList] = useState([]);
+
+    useEffect(() => {
+        if (boards.length === 0) {
+            axios
+                .get(route("boards.index"), {
+                    withCredentials: true,
+                    headers: { Accept: "application/json" },
+                })
+                .then((res) => {
+                    setBoardList(res.data);
+                });
+        }
+    }, [boards]);
+
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-950 dark:text-white">
             {header && (
@@ -319,7 +343,7 @@ export default function BoardLayout({
                                         <img
                                             src={user.photo_url}
                                             alt={user.name}
-                                            className="w-6 h-6"
+                                            className="w-6 h-6 object-cover object-center border border-gray-300 rounded-full"
                                         />
                                         <p className="truncate text-sm">
                                             {user.name}
@@ -365,19 +389,23 @@ export default function BoardLayout({
                                         Tambah baru
                                     </span>
                                 </SidebarLink>
-                                {boards.map((board) => (
-                                    <SidebarLink
-                                        key={board.id}
-                                        icon={<span className="bi-dot"></span>}
-                                        href={route("boards.edit", {
-                                            board: board.id,
-                                        })}
-                                    >
-                                        <span className="truncate">
-                                            {board.title || "Tanpa Judul"}
-                                        </span>
-                                    </SidebarLink>
-                                ))}
+                                {(boards.length === 0 ? boardList : boards).map(
+                                    (board) => (
+                                        <SidebarLink
+                                            key={board.id}
+                                            icon={
+                                                <span className="bi-dot"></span>
+                                            }
+                                            href={route("boards.edit", {
+                                                board: board.id,
+                                            })}
+                                        >
+                                            <span className="truncate">
+                                                {board.title || "Tanpa Judul"}
+                                            </span>
+                                        </SidebarLink>
+                                    )
+                                )}
                             </div>
                         </div>
                         <div className="col-span-12 lg:col-span-9 xl:col-span-10 bg-gray-100 dark:bg-gray-950">

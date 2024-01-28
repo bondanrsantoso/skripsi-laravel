@@ -45,20 +45,10 @@ class IndexDocument implements ShouldQueue
         $this->artifact->save();
 
         foreach ($splitDocumentResponse->json("chunks", []) as $chunk) {
-            try {
-                $contextExtractionResponse = Http::post(env("AI_BACKEND_BASEURL") . IndexDocument::EXTRACT_CONTEXT_ENDPOINT, [
-                    "text" => $chunk
-                ]);
+            $extractJob = (new ExtractContext($this->artifact, $chunk))
+                ->onQueue("artifact_index");
 
-                foreach ($contextExtractionResponse->json() as $contextInfo) {
-                    $this->artifact->contexts()->create([
-                        "field" => $contextInfo["field"],
-                        "value" => is_array($contextInfo["value"]) ? json_encode($contextInfo["value"]) : $contextInfo["value"],
-                    ]);
-                }
-            } catch (\Throwable $th) {
-                Log::error("Failed extracting context data from text");
-            }
+            dispatch($extractJob);
         }
     }
 }

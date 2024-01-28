@@ -110,7 +110,7 @@ class ChatMessageController extends Controller
         $messages = collect($chatInstance->messages);
         $lastMessage = $messages->pop();
 
-        $url = env("AI_BACKEND_BASEURL", "http://localhost:6996");
+        $url = env("CHAT_BACKEND_BASEURL", env("AI_BACKEND_BASEURL", "http://localhost:6996"));
         $url .= "/chat/getAnswer";
 
         $chatBotResponse = Http::timeout(90)->post($url, [

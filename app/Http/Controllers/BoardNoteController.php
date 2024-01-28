@@ -99,8 +99,10 @@ class BoardNoteController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(BoardNote $boardNote)
+    public function destroy(Board $board, BoardNote $boardNote)
     {
-        //
+        $boardNote->delete();
+
+        return to_route("boards.edit", ["board" => $board->id]);
     }
 }

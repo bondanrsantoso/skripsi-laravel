@@ -5,6 +5,8 @@ import LocalizedFormat from "dayjs/esm/plugin/localizedFormat";
 import SecondaryButton from "@/Components/SecondaryButton";
 import QuillEditor from "@/Components/QuillEditor";
 import DOMPurify from "dompurify";
+import DangerButton from "@/Components/DangerButton";
+import { Link } from "@inertiajs/react";
 
 dayjs.extend(LocalizedFormat);
 
@@ -12,7 +14,9 @@ export default function BoardItem({
     item,
     className = "",
     onChange,
+    onDelete,
     readOnly = false,
+    boardId = null,
     ...props
 }) {
     const { sanitize } = DOMPurify;
@@ -43,7 +47,7 @@ export default function BoardItem({
             return (
                 <Card
                     target="_blank"
-                    className="w-full flex flex-row items-center gap-4"
+                    className="w-full flex flex-row items-center gap-4 group"
                 >
                     <p style={{ fontSize: "5rem" }}>
                         <i className="bi-file-earmark"></i>
@@ -78,6 +82,17 @@ export default function BoardItem({
                             >
                                 Lihat detail
                             </SecondaryButton>
+                            <DangerButton
+                                as={Link}
+                                method="DELETE"
+                                className="opacity-0 group-hover:opacity-100"
+                                href={route("boards.artifacts.destroy", {
+                                    board: boardId,
+                                    artifact: item.id,
+                                })}
+                            >
+                                Hapus
+                            </DangerButton>
                         </div>
                     </div>
                 </Card>

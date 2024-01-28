@@ -36,8 +36,11 @@ class ArtifactContextController extends Controller
             });
         }
 
-        $contexts = $contextQuery->select(["field", "value", "artifact_id"])
-            ->take(10)
+        $contexts = $contextQuery->with([
+            "artifact:id,filename,owner_id" => ["owner:id,name,email"]
+        ])
+            ->select(["field", "value", "artifact_id"])
+            ->take(5)
             ->get();
 
         // $artifacts = [];

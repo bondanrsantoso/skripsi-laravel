@@ -7,8 +7,8 @@ import SecondaryButton from "@/Components/SecondaryButton";
 import TextInput from "@/Components/TextInput";
 import BoardLayout from "@/Layouts/BoardLayout";
 import { formatCurrency } from "@/lib/currencyFormat";
-import { Dialog, Disclosure } from "@headlessui/react";
-import { Head, router, useForm } from "@inertiajs/react";
+import { Combobox, Dialog, Disclosure } from "@headlessui/react";
+import { Head, Link, router, useForm } from "@inertiajs/react";
 import axios from "axios";
 import dayjs from "dayjs";
 import LocaleFormat from "dayjs/plugin/localizedFormat";
@@ -320,6 +320,8 @@ export default function BoardEditView({
         }, 500);
     }, [data.brief, data.project_id, data.title, data.users, isDirty]);
 
+    const [showProjectDialog, setShowProjectDialog] = useState(false);
+
     return (
         <BoardLayout
             user={auth.user}
@@ -332,6 +334,25 @@ export default function BoardEditView({
             selectedBoard={data}
         >
             <Head title="Boards" />
+            <Dialog
+                as="div"
+                className="fixed top-0 left-0 w-screen h-screen overflow-auto flex justify-center items-center"
+                open={showProjectDialog}
+                onClose={() => {
+                    setShowCollaboratorEditor(false);
+                }}
+            >
+                <Dialog.Panel
+                    as="div"
+                    className="w-full flex items-center justify-center relative"
+                >
+                    <ProjectEditor
+                        onChange={(project) => {
+                            setData("project_id", project.id);
+                        }}
+                    />
+                </Dialog.Panel>
+            </Dialog>
             <Dialog
                 as="div"
                 className="fixed top-0 left-0 w-screen h-screen overflow-auto flex justify-center items-center"
@@ -391,6 +412,15 @@ export default function BoardEditView({
                 <p className="text-sm opacity-75">
                     Terakhir diperbaharui pada:{" "}
                     {dayjs(board.updated_at).format("LLL")}
+                </p>
+                <p className="flex flex-row gap-4">
+                    <SecondaryButton
+                        as={Link}
+                        href={route("boards.tasks.index", { board: board.id })}
+                        className="border border-gray-300"
+                    >
+                        <i className="bi-clipboard mr-2"></i> Tugas
+                    </SecondaryButton>
                 </p>
                 <div className="flex flex-row gap-3 flex-wrap">
                     {data.users.map((user, i) => (
@@ -454,6 +484,8 @@ export default function BoardEditView({
                             setBoardItems(items);
                         }}
                         readOnly={!board.is_editable}
+                        boardId={board.id}
+                        onDelete={() => {}}
                     />
                 ))}
                 {filesUploading.length > 0 && (
@@ -545,5 +577,122 @@ export default function BoardEditView({
             </div> */}
             {/* <div></div> */}
         </BoardLayout>
+    );
+}
+
+let projectSearchTimeout;
+
+function ProjectEditor({
+    selectedProject = null,
+    onChange,
+    className,
+    ...props
+}) {
+    const [projects, setProjects] = useState([]);
+    const [projectSearch, setProjectSearch] = useState("");
+    const [searchedProjects, setSearchedProjects] = useState([]);
+
+    const [project, setProject] = useState(selectedProject);
+
+    useEffect(() => {
+        clearTimeout(projectSearchTimeout);
+
+        projectSearchTimeout = setTimeout(() => {
+            axios
+                .get(
+                    route("projects.index", {
+                        pageSize: 999,
+                        search: projectSearch,
+                    }),
+                    {
+                        withCredentials: true,
+                        headers: { Accept: "application/json" },
+                    }
+                )
+                .then((res) => {
+                    if (res.data && res.data.data && res.data.data.length) {
+                        setSearchedProjects(res.data.data);
+                    } else {
+                        setSearchedProjects([]);
+                    }
+                })
+                .catch((err) => {
+                    console.error(err);
+                    setSearchedProjects([]);
+                });
+        }, 500);
+    }, [projectSearch]);
+
+    // useEffect(() => {
+    //     setSearchedProjects(
+    //         searchedProjects.filter(
+    //             (d) =>
+    //                 ![...(projects || [])].some(
+    //                     (existing) => existing.id === d.id
+    //                 )
+    //         )
+    //     );
+    // }, [projects]);
+    return (
+        <Card className={twMerge("max-w-5xl", className)}>
+            <div className="space-y-6">
+                <h1 className="text-xl font-bold">
+                    Hubungkan dengan data proyek
+                </h1>
+                <div>
+                    <Combobox
+                        className="relative w-full"
+                        as="div"
+                        onChange={(project) => {
+                            const projectList = projects.slice(0);
+                            if (!projectList.find((p) => p.id === project.id)) {
+                                projectList.push({
+                                    ...project,
+                                    pivot: { role: 0 },
+                                });
+
+                                setProjects(projectList);
+                            }
+                        }}
+                    >
+                        <Combobox.Input
+                            as={TextInput}
+                            onChange={(e) => setProjectSearch(e.target.value)}
+                            className="w-full"
+                            placeholder="Cari Proyek..."
+                        />
+
+                        <Combobox.Button className="absolute inset-y-0 right-3">
+                            <i className="bi-chevron-expand"></i>
+                        </Combobox.Button>
+                        <Combobox.Options className="absolute mt-2 max-h-60 w-full overflow-auto z-20">
+                            {searchedProjects.length === 0 && (
+                                <Combobox.Option
+                                    disabled
+                                    className="relative p-4 bg-white dark:bg-gray-800"
+                                >
+                                    <i className="opacity-50">
+                                        Tidak ada proyek yang sesuai pencarian
+                                    </i>
+                                </Combobox.Option>
+                            )}
+                            {searchedProjects.map((project) => (
+                                <Combobox.Option
+                                    className="relative p-4 bg-white ui-selected:font-bold ui-active:bg-gray-300 dark:bg-gray-800 ui-active:dark:bg-gray-600"
+                                    key={project.id}
+                                    value={project}
+                                >
+                                    {project.name}
+                                </Combobox.Option>
+                            ))}
+                        </Combobox.Options>
+                    </Combobox>
+                </div>
+                <hr />
+                {/* <SecondaryButton as={Link} href className="w-full">
+                    
+                </SecondaryButton> */}
+            </div>
+        </Card>
     );
 }

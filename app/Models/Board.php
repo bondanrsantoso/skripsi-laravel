@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
@@ -94,5 +95,10 @@ class Board extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class, "board_id", "id");
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class, "project_id", "id");
     }
 }

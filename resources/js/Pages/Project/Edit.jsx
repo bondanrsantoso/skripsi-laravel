@@ -23,6 +23,7 @@ import Pill from "@/Components/Pill";
 import TextArea from "@/Components/TextArea";
 import SecondaryButton from "@/Components/SecondaryButton";
 import PrimaryButton from "@/Components/PrimaryButton";
+import BoardLayout from "@/Layouts/BoardLayout";
 
 dayjs.extend(LocalizedFormat);
 dayjs.extend(UTC);
@@ -148,7 +149,7 @@ export default function ProjectEditView({ project = null, auth, ...props }) {
     }, [data.managers, data.internal_members]);
 
     return (
-        <AuthenticatedLayout
+        <BoardLayout
             user={auth.user}
             header={
                 <div className="flex flex-row items-baseline">
@@ -539,6 +540,6 @@ export default function ProjectEditView({ project = null, auth, ...props }) {
                     </PrimaryButton>
                 </Card>
             </form>
-        </AuthenticatedLayout>
+        </BoardLayout>
     );
 }

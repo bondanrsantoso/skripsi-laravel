@@ -15,9 +15,13 @@ class BoardController extends Controller
      */
     public function index(Request $request)
     {
+        $boards = Board::whereRelation("users", "users.id", $request->user()->id)
+            ->select(["boards.id", "title"])->get();
+        if ($request->expectsJson()) {
+            return response()->json($boards);
+        }
         return Inertia::render("Board/Dashboard", [
-            "boards" => Board::whereRelation("users", "users.id", $request->user()->id)
-                ->select(["boards.id", "title"])->get(),
+            "boards" => $boards,
         ]);
     }
 
@@ -69,7 +73,7 @@ class BoardController extends Controller
             return to_route("boards.index");
         }
 
-        $board->load(["users"]);
+        $board->load(["users", "project"]);
         $board->append(["items", "is_editable"]);
 
         return Inertia::render("Board/Edit", [

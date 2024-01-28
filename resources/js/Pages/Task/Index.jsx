@@ -3,7 +3,7 @@ import SecondaryButton from "@/Components/SecondaryButton";
 import BoardLayout from "@/Layouts/BoardLayout";
 import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { Dialog } from "@headlessui/react";
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import dayjs from "dayjs";
 import LocaleFormat from "dayjs/plugin/localizedFormat";
 import { twMerge } from "tailwind-merge";
@@ -144,33 +144,41 @@ export default function TaskView({
                     />
                 </Dialog.Panel>
             </Dialog>
-            <h1 className="text-3xl font-bold mb-4">Manajer Tugas</h1>
-            <PrimaryButton
-                type="button"
-                onClick={() => setShowEditDialog(true)}
-                className="mb-4"
-            >
-                Buat Tugas Baru
-            </PrimaryButton>
-            <DndContext>
-                <div className="flex flex-row flex-wrap overflow-x-auto w-full min-h-[60vh] gap-3">
-                    {statusLabels.map((status, i) => (
-                        <TaskContainer key={i} status={status}>
-                            {tasks
-                                .filter((t) => t.status === i)
-                                .map((t, iTask) => (
-                                    <TaskItem
-                                        onSelect={() => {
-                                            setSelectedTask(t);
-                                        }}
-                                        key={iTask}
-                                        task={t}
-                                    />
-                                ))}
-                        </TaskContainer>
-                    ))}
-                </div>
-            </DndContext>
+            <div className="space-y-6">
+                <SecondaryButton
+                    as={Link}
+                    href={route("boards.edit", { board: activeBoard.id })}
+                >
+                    <i className="bi-chevron-left mr-2"></i>
+                    <p>Kembali</p>
+                </SecondaryButton>
+                <h1 className="text-3xl font-bold">Manajer Tugas</h1>
+                <PrimaryButton
+                    type="button"
+                    onClick={() => setShowEditDialog(true)}
+                >
+                    Buat Tugas Baru
+                </PrimaryButton>
+                <DndContext>
+                    <div className="flex flex-row flex-wrap overflow-x-auto w-full min-h-[60vh] gap-3">
+                        {statusLabels.map((status, i) => (
+                            <TaskContainer key={i} status={status}>
+                                {tasks
+                                    .filter((t) => t.status === i)
+                                    .map((t, iTask) => (
+                                        <TaskItem
+                                            onSelect={() => {
+                                                setSelectedTask(t);
+                                            }}
+                                            key={iTask}
+                                            task={t}
+                                        />
+                                    ))}
+                            </TaskContainer>
+                        ))}
+                    </div>
+                </DndContext>
+            </div>
         </BoardLayout>
     );
 }

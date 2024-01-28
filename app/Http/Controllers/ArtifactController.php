@@ -132,8 +132,10 @@ class ArtifactController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Artifact $artifact)
+    public function destroy(Board $board, Artifact $artifact)
     {
-        //
+        $board->artifacts()->detach($artifact->id);
+
+        return to_route("boards.edit", ["board" => $board->id]);
     }
 }
