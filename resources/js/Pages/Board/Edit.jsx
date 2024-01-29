@@ -19,6 +19,7 @@ import Spinner from "@/Components/Spinner";
 import BoardItem from "./Partials/BoardItem";
 import Pill from "@/Components/Pill";
 import CollaboratorEditor from "./Partials/Collaborators";
+import ConfirmDialog from "@/Components/ConfirmDialog";
 
 dayjs.extend(LocaleFormat);
 
@@ -322,6 +323,21 @@ export default function BoardEditView({
 
     const [showProjectDialog, setShowProjectDialog] = useState(false);
 
+    const [itemToBeDeletedIndex, setItemToBeDeletedIndex] = useState(null);
+
+    const { delete: deleteItem, recentlySuccessful: deleteItemSuccessful } =
+        useForm();
+
+    useEffect(() => {
+        if (deleteItemSuccessful) {
+            const items = boardItems.slice(0);
+            items.splice(itemToBeDeletedIndex, 1);
+
+            setBoardItems(items);
+            setItemToBeDeletedIndex(null);
+        }
+    }, [deleteItemSuccessful]);
+
     return (
         <BoardLayout
             user={auth.user}
@@ -355,7 +371,7 @@ export default function BoardEditView({
             </Dialog>
             <Dialog
                 as="div"
-                className="fixed top-0 left-0 w-screen h-screen overflow-auto flex justify-center items-center"
+                className="fixed top-0 left-0 w-screen h-screen overflow-auto flex justify-center items-center bg-[rgba(0,0,0,0.7)]"
                 open={showCollaboratorEditor}
                 onClose={() => {
                     setShowCollaboratorEditor(false);
@@ -396,6 +412,42 @@ export default function BoardEditView({
                     </Card>
                 </div>
             )}
+            <ConfirmDialog
+                open={itemToBeDeletedIndex !== null}
+                onConfirm={() => {
+                    const item = boardItems[itemToBeDeletedIndex];
+                    if (item.type === "file") {
+                        deleteItem(
+                            route("boards.artifacts.destroy", {
+                                board: board.id,
+                                artifact: item.id,
+                            })
+                        );
+                    } else if (item.type === "text") {
+                        deleteItem(
+                            route("boards.board_notes.destroy", {
+                                board: board.id,
+                                board_note: item.id,
+                            })
+                        );
+                    }
+                }}
+                onCancel={() => setItemToBeDeletedIndex(null)}
+            >
+                <h1 className="font-bold text-lg">
+                    Hapus{" "}
+                    {itemToBeDeletedIndex?.type === "file"
+                        ? "Berkas"
+                        : "Catatan"}
+                    ?
+                </h1>
+                <p>
+                    {itemToBeDeletedIndex?.type === "file"
+                        ? "Berkas"
+                        : "Catatan"}{" "}
+                    yang dihapus tidak dapat dikembalikan
+                </p>
+            </ConfirmDialog>
             <div
                 className="w-full space-y-6"
                 onDragEnter={(e) => setShowDragUI(true)}
@@ -408,19 +460,20 @@ export default function BoardEditView({
                     onChange={(e) => {
                         setData("title", e.target.value);
                     }}
+                    id="board-title"
                 />
                 <p className="text-sm opacity-75">
                     Terakhir diperbaharui pada:{" "}
                     {dayjs(board.updated_at).format("LLL")}
                 </p>
                 <p className="flex flex-row gap-4">
-                    <SecondaryButton
+                    {/* <SecondaryButton
                         as={Link}
                         href={route("boards.tasks.index", { board: board.id })}
                         className="border border-gray-300"
                     >
                         <i className="bi-clipboard mr-2"></i> Tugas
-                    </SecondaryButton>
+                    </SecondaryButton> */}
                 </p>
                 <div className="flex flex-row gap-3 flex-wrap">
                     {data.users.map((user, i) => (
@@ -485,7 +538,9 @@ export default function BoardEditView({
                         }}
                         readOnly={!board.is_editable}
                         boardId={board.id}
-                        onDelete={() => {}}
+                        onDelete={(item) => {
+                            setItemToBeDeletedIndex(i);
+                        }}
                     />
                 ))}
                 {filesUploading.length > 0 && (

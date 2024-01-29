@@ -16,7 +16,6 @@ export default function BoardItem({
     onChange,
     onDelete,
     readOnly = false,
-    boardId = null,
     ...props
 }) {
     const { sanitize } = DOMPurify;
@@ -83,13 +82,9 @@ export default function BoardItem({
                                 Lihat detail
                             </SecondaryButton>
                             <DangerButton
-                                as={Link}
-                                method="DELETE"
+                                type="button"
                                 className="opacity-0 group-hover:opacity-100"
-                                href={route("boards.artifacts.destroy", {
-                                    board: boardId,
-                                    artifact: item.id,
-                                })}
+                                onClick={() => onDelete(item)}
                             >
                                 Hapus
                             </DangerButton>

@@ -42,7 +42,7 @@ Route::middleware(['auth'])->prefix("/dashboard")->group(function () {
 
     Route::resource("boards", BoardController::class);
     Route::resource("boards.artifacts", ArtifactController::class)->middleware("upload:file,file_url,file_path");
-    Route::resource("boards.board_notes", BoardNoteController::class)->only(["store", "update"])->middleware("upload:file,file_url");
+    Route::resource("boards.board_notes", BoardNoteController::class)->only(["store", "update", "destroy"])->middleware("upload:file,file_url");
     Route::resource("boards.tasks", TaskController::class);
     Route::resource("boards.users", UserController::class)->only(["index"]);
 

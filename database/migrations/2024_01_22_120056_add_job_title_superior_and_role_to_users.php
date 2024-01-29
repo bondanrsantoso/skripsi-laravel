@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->text("photo_url");
+            $table->text("photo_url")->nullable();
             $table->unsignedTinyInteger("role")->default(User::ROLE_USER);
             $table->string("job_title")->default("Pegawai");
             $table->foreignId("superior_id")->nullable()->constrained(table: "users")->nullOnDelete()->cascadeOnUpdate();

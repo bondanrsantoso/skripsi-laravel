@@ -373,12 +373,12 @@ export default function BoardLayout({
                                     </Menu.Items>
                                 </Menu>
                                 {/* <hr className="border-gray-300" /> */}
-                                <SidebarLink
+                                {/* <SidebarLink
                                     icon={<span className="bi-search"></span>}
                                     href="#"
                                 >
                                     <span className="truncate">Cari</span>
-                                </SidebarLink>
+                                </SidebarLink> */}
                                 <SidebarLink
                                     icon={
                                         <span className="bi-plus-circle"></span>
