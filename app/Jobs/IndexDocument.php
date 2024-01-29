@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\Artifact;
+use App\Models\Board;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,12 +23,15 @@ class IndexDocument implements ShouldQueue
 
     const SPLIT_DOC_ENDPOINT = "/indexer/splitDocs";
     const EXTRACT_CONTEXT_ENDPOINT = "/indexer/extractContext";
+    const INDEX_DOC_VECTOR = "/indexer/indexDocumentVector";
 
     /**
      * Create a new job instance.
      */
     public function __construct(
-        public Artifact $artifact
+        public Artifact $artifact,
+        private $board_id = null,
+        private $user_id = null,
     ) {
         //
     }
@@ -39,16 +44,19 @@ class IndexDocument implements ShouldQueue
         $file = file_get_contents(Storage::path($this->artifact->path));
 
         $splitDocumentResponse = Http::attach("file", $file, $this->artifact->filename)
-            ->post(env("AI_BACKEND_BASEURL") . IndexDocument::SPLIT_DOC_ENDPOINT);
+            ->post(env("AI_BACKEND_BASEURL") . IndexDocument::INDEX_DOC_VECTOR, [
+                "board_id" => $this->board_id,
+                "user_id" => $this->user_id,
+            ]);
 
         $this->artifact->text_content = $splitDocumentResponse->json("parsed_text", null);
         $this->artifact->save();
 
-        foreach ($splitDocumentResponse->json("chunks", []) as $chunk) {
-            $extractJob = (new ExtractContext($this->artifact, $chunk))
-                ->onQueue("artifact_index");
+        // foreach ($splitDocumentResponse->json("chunks", []) as $chunk) {
+        //     $extractJob = (new ExtractContext($this->artifact, $chunk))
+        //         ->onQueue("artifact_index");
 
-            dispatch($extractJob);
-        }
+        //     dispatch($extractJob);
+        // }
     }
 }

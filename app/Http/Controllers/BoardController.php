@@ -89,7 +89,7 @@ class BoardController extends Controller
     public function update(Request $request, Board $board)
     {
         $valid = $request->validate([
-            "title" => "nullable|string",
+            "title" => "nullable|string|max:255",
             "project_id" => "nullable|exists:projects,id",
             "brief" => "nullable|string",
             "users" => "sometimes|array",

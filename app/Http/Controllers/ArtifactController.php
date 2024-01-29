@@ -6,6 +6,7 @@ use App\Jobs\IndexDocument;
 use App\Models\Artifact;
 use App\Models\Board;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -85,7 +86,9 @@ class ArtifactController extends Controller
             Artifact::MIME_XML,
             Artifact::MIME_TXT,
         ])->contains($mime)) {
-            $indexingJob = (new IndexDocument($artifact))
+            $boardId = $board === null ? null : $board->id;
+            $userId = Auth::check() ? Auth::user()->id : null;
+            $indexingJob = (new IndexDocument($artifact, $boardId, $userId))
                 ->onQueue("artifact_index");
 
             dispatch($indexingJob);

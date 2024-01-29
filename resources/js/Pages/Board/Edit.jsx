@@ -20,6 +20,7 @@ import BoardItem from "./Partials/BoardItem";
 import Pill from "@/Components/Pill";
 import CollaboratorEditor from "./Partials/Collaborators";
 import ConfirmDialog from "@/Components/ConfirmDialog";
+import InputError from "@/Components/InputError";
 
 dayjs.extend(LocaleFormat);
 
@@ -38,15 +39,39 @@ export default function BoardEditView({
     selectedProject = null,
     ...props
 }) {
-    const { data, setData, post, reset, setDefaults, isDirty } = useForm({
+    const {
+        data,
+        setData,
+        put,
+        reset,
+        setDefaults,
+        isDirty,
+        recentlySuccessful,
+        processing,
+        errors,
+    } = useForm({
         id: board.id,
         title: board.title || "",
         project_id: board.project_id || null,
         brief: board.brief || "",
-        users: board.users,
+        users: board.users.map((u) => ({
+            id: u.id,
+            role: u.pivot.role,
+        })),
     });
 
+    const [collaborators, setCollaborators] = useState(board.users);
     const [showCollaboratorEditor, setShowCollaboratorEditor] = useState(false);
+
+    useEffect(() => {
+        setData(
+            "users",
+            collaborators.map((u) => ({
+                id: u.id,
+                role: u.pivot.role,
+            }))
+        );
+    }, [collaborators]);
 
     const [isSyncing, setSyncing] = useState(false);
     const [boardList, setBoardList] = useState(boards);
@@ -291,33 +316,28 @@ export default function BoardEditView({
         setFilesUploading(uploadQueue);
     }
 
+    const [boardSyncError, setBoardSyncError] = useState(null);
     useEffect(() => {
         if (syncTimeout) {
             clearTimeout(syncTimeout);
-            setSyncing(false);
         }
 
         syncTimeout = setTimeout(() => {
-            setSyncing(true);
-            axios
-                .put(route("boards.update", { board: board.id }), {
-                    ...data,
-                    users: data.users.map((u) => ({
-                        id: u.id,
-                        role: u.pivot.role,
-                    })),
-                })
-                .then((res) => {
-                    console.log("Saved");
-                    // setDefaults(res.data);
-                    // reset();
-                })
-                .catch((err) => {
-                    console.error(err);
-                })
-                .finally(() => {
-                    setSyncing(false);
-                });
+            put(route("boards.update", { board: board.id }));
+            // axios
+            //     .put(route("boards.update", { board: board.id }), data)
+            //     .then((res) => {
+            //         console.log("Saved");
+            //         // setDefaults(res.data);
+            //         // reset();
+            //     })
+            //     .catch((err) => {
+            //         console.error(err);
+            //         setBoardSyncError(error);
+            //     })
+            //     .finally(() => {
+            //         setSyncing(false);
+            //     });
         }, 500);
     }, [data.brief, data.project_id, data.title, data.users, isDirty]);
 
@@ -342,7 +362,7 @@ export default function BoardEditView({
         <BoardLayout
             user={auth.user}
             syncing={
-                isSyncing ||
+                processing ||
                 filesUploading.length > 0 ||
                 noteUpdateQueue.length > 0
             }
@@ -382,12 +402,11 @@ export default function BoardEditView({
                     className="w-full flex items-center justify-center relative"
                 >
                     <CollaboratorEditor
-                        users={data.users}
+                        users={collaborators}
                         myself={auth.user}
                         className="mt-20 mb-20 relative"
                         onChange={(users) => {
-                            setData(
-                                "users",
+                            setCollaborators(
                                 users
                                     .sort((a, b) => b.pivot.role - a.pivot.role)
                                     .map((u) => u)
@@ -453,15 +472,18 @@ export default function BoardEditView({
                 onDragEnter={(e) => setShowDragUI(true)}
                 id="wrapper"
             >
-                <TextInput
-                    className="text-4xl border-0 border-b rounded-none w-full focus:ring-0"
-                    placeholder="Judul"
-                    value={data.title}
-                    onChange={(e) => {
-                        setData("title", e.target.value);
-                    }}
-                    id="board-title"
-                />
+                <div className="space-y-1">
+                    <TextInput
+                        className="text-4xl border-0 border-b rounded-none w-full focus:ring-0"
+                        placeholder="Judul"
+                        value={data.title}
+                        onChange={(e) => {
+                            setData("title", e.target.value);
+                        }}
+                        id="board-title"
+                    />
+                    <InputError message={errors.title} />
+                </div>
                 <p className="text-sm opacity-75">
                     Terakhir diperbaharui pada:{" "}
                     {dayjs(board.updated_at).format("LLL")}
@@ -476,7 +498,7 @@ export default function BoardEditView({
                     </SecondaryButton> */}
                 </p>
                 <div className="flex flex-row gap-3 flex-wrap">
-                    {data.users.map((user, i) => (
+                    {collaborators.map((user, i) => (
                         <Pill
                             className={twMerge(
                                 "py-0 pl-0 flex flex-row gap-2 items-center",

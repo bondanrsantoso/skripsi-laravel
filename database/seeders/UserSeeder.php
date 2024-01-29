@@ -23,6 +23,9 @@ class UserSeeder extends Seeder
         try {
             DB::beginTransaction();
             \App\Models\User::factory(12)->create();
+            \App\Models\User::factory()->create([
+                "email" => "test_user@example.com"
+            ]);
 
             DB::commit();
         } catch (\Throwable $th) {
