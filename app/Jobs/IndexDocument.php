@@ -43,7 +43,7 @@ class IndexDocument implements ShouldQueue
     {
         $file = file_get_contents(Storage::path($this->artifact->path));
 
-        $splitDocumentResponse = Http::attach("file", $file, $this->artifact->filename)
+        $splitDocumentResponse = Http::timeout(240)->attach("file", $file, $this->artifact->filename)
             ->post(env("AI_BACKEND_BASEURL") . IndexDocument::INDEX_DOC_VECTOR, [
                 "board_id" => $this->board_id,
                 "user_id" => $this->user_id,

@@ -22,7 +22,21 @@ export default function BoardItem({
     if (item.type === "file") {
         if (item.mime_type.includes("image")) {
             return (
-                <div className={twMerge("space-y-1 w-full", className)}>
+                <div
+                    className={twMerge(
+                        "space-y-1 w-full relative group",
+                        className
+                    )}
+                >
+                    {!readOnly && (
+                        <DangerButton
+                            type="button"
+                            className="absolute top-0 right-0 opacity-0 group-hover:opacity-100"
+                            onClick={() => onDelete(item)}
+                        >
+                            Hapus
+                        </DangerButton>
+                    )}
                     <img src={item.url} className="w-full" />
                     <p className="text-sm text-center opacity-50">
                         {item.filename} diunggah oleh{" "}
@@ -33,7 +47,21 @@ export default function BoardItem({
             );
         } else if (item.mime_type.includes("video")) {
             return (
-                <div className={twMerge("space-y-1 w-full", className)}>
+                <div
+                    className={twMerge(
+                        "space-y-1 w-full relative group",
+                        className
+                    )}
+                >
+                    {!readOnly && (
+                        <DangerButton
+                            type="button"
+                            className="absolute top-0 right-0 opacity-0 group-hover:opacity-100"
+                            onClick={() => onDelete(item)}
+                        >
+                            Hapus
+                        </DangerButton>
+                    )}
                     <video controls src={item.url} className="w-full" />
                     <p className="text-sm text-center opacity-50">
                         {item.filename} diunggah oleh{" "}
@@ -81,13 +109,15 @@ export default function BoardItem({
                             >
                                 Lihat detail
                             </SecondaryButton>
-                            <DangerButton
-                                type="button"
-                                className="opacity-0 group-hover:opacity-100"
-                                onClick={() => onDelete(item)}
-                            >
-                                Hapus
-                            </DangerButton>
+                            {!readOnly && (
+                                <DangerButton
+                                    type="button"
+                                    className="opacity-0 group-hover:opacity-100"
+                                    onClick={() => onDelete(item)}
+                                >
+                                    Hapus
+                                </DangerButton>
+                            )}
                         </div>
                     </div>
                 </Card>

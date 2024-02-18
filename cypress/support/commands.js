@@ -11,6 +11,7 @@
 //
 // -- This is a parent command --
 Cypress.Commands.add("login", (email, password) => {
+    cy.clearAllCookies();
     cy.session([email, password], () => {
         cy.visit("/login");
         cy.get("input[type=email]").type(email);

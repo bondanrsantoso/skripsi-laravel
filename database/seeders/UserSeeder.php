@@ -26,6 +26,10 @@ class UserSeeder extends Seeder
             \App\Models\User::factory()->create([
                 "email" => "test_user@example.com"
             ]);
+            \App\Models\User::factory()->create([
+                "name" => "ZZREADONLYUSER",
+                "email" => "test_user_reader@example.com",
+            ]);
 
             DB::commit();
         } catch (\Throwable $th) {

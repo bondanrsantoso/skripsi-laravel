@@ -42,8 +42,14 @@ export default function ArtifactView({ boards, artifact, auth, ...props }) {
                         </div>
                     </div>
                 </Card>
-                <h1 className="text-2xl font-bold">Informasi Kontekstual</h1>
-                {artifact.contexts.map((context, i) => (
+                <h1 className="text-2xl font-bold">Isi teks Dokumen</h1>
+                <div className="space-y-6">
+                    {!artifact.text_content && "Teks tidak terbaca oleh sistem"}
+                    {artifact.text_content.split("\n").map((p) => (
+                        <p>{p}</p>
+                    ))}
+                </div>
+                {/* {artifact.contexts.map((context, i) => (
                     <div
                         key={i}
                         className="py-4 border-t border-gray-300 last:border-b"
@@ -51,7 +57,7 @@ export default function ArtifactView({ boards, artifact, auth, ...props }) {
                         <h6 className="font-bold text-sm">{context.field}</h6>
                         <p className="text-md text-justify">{context.value}</p>
                     </div>
-                ))}
+                ))} */}
             </div>
         </BoardLayout>
     );
