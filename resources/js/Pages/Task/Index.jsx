@@ -3,7 +3,7 @@ import SecondaryButton from "@/Components/SecondaryButton";
 import BoardLayout from "@/Layouts/BoardLayout";
 import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { Dialog } from "@headlessui/react";
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import dayjs from "dayjs";
 import LocaleFormat from "dayjs/plugin/localizedFormat";
 import { twMerge } from "tailwind-merge";
@@ -14,9 +14,9 @@ import PrimaryButton from "@/Components/PrimaryButton";
 
 dayjs.extend(LocaleFormat);
 
-function TaskContainer({ children, status = "", ...props }) {
+function TaskContainer({ children, statusId, status = "", ...props }) {
     const { isOver, setNodeRef } = useDroppable({
-        id: status.replace(/\s+/gi, "-"),
+        id: statusId,
     });
     return (
         <div
@@ -28,7 +28,7 @@ function TaskContainer({ children, status = "", ...props }) {
             )}
         >
             <h1 className="text-sm font-bold mb-4">{status}</h1>
-            <div>{children}</div>
+            <div className="space-y-4">{children}</div>
         </div>
     );
 }
@@ -37,6 +37,7 @@ function TaskItem({ task, onSelect, ...props }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
             id: task.id,
+            data: task,
         });
     const style = transform
         ? {
@@ -77,7 +78,7 @@ function TaskItem({ task, onSelect, ...props }) {
 
 export default function TaskView({
     boards,
-    tasks,
+    tasks: taskData,
     statusLabels,
     priorityLabels,
     activeBoard,
@@ -86,6 +87,20 @@ export default function TaskView({
 }) {
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [tasks, setTasks] = useState(taskData || []);
+    const [needRefresh, setNeedRefresh] = useState(false);
+
+    useEffect(() => {
+        if (needRefresh) {
+            router.reload({
+                preserveState: false,
+            });
+        }
+    }, [needRefresh]);
+
+    useEffect(() => {
+        setTasks(taskData);
+    }, [taskData]);
 
     useEffect(() => {
         if (
@@ -111,6 +126,44 @@ export default function TaskView({
         }
     }, [selectedTask]);
 
+    function handleDragEnd(e) {
+        // Update task status to reflect new status
+        /**
+         * @type Array
+         */
+        const taskArr = tasks.slice(0);
+        const taskIndex = taskArr.findIndex((t) => t.id === e.active.id);
+        if (taskIndex === -1) {
+            return;
+        }
+
+        const task = taskArr[taskIndex];
+
+        const oldStatus = task.status || 0;
+        const newStatus = e.over.id;
+
+        task.status = newStatus;
+        setTasks(taskArr);
+
+        axios
+            .put(
+                route("boards.tasks.update", {
+                    board: activeBoard.id,
+                    task: task.id,
+                }),
+                {
+                    status: newStatus,
+                },
+                { headers: { Accept: "application/json" } }
+            )
+            .then((res) => {
+                console.log("OK", res);
+            })
+            .catch((err) => {
+                router.reload();
+            });
+    }
+
     return (
         <BoardLayout
             user={auth.user}
@@ -120,7 +173,7 @@ export default function TaskView({
             <Head title="Boards" />
             <Dialog
                 as="div"
-                className="fixed top-0 left-0 w-screen h-screen overflow-auto flex justify-center items-center"
+                className="fixed top-0 left-0 w-screen h-screen overflow-auto flex justify-center items-center bg-dim"
                 open={showEditDialog}
                 onClose={() => {
                     // setShowCollaboratorEditor(false);
@@ -141,6 +194,11 @@ export default function TaskView({
                             setSelectedTask(null);
                             setShowEditDialog(false);
                         }}
+                        onSubmit={() => {
+                            setSelectedTask(null);
+                            setShowEditDialog(false);
+                            setNeedRefresh(true);
+                        }}
                     />
                 </Dialog.Panel>
             </Dialog>
@@ -159,10 +217,10 @@ export default function TaskView({
                 >
                     Buat Tugas Baru
                 </PrimaryButton>
-                <DndContext>
+                <DndContext onDragEnd={handleDragEnd}>
                     <div className="flex flex-row flex-wrap overflow-x-auto w-full min-h-[60vh] gap-3">
                         {statusLabels.map((status, i) => (
-                            <TaskContainer key={i} status={status}>
+                            <TaskContainer key={i} statusId={i} status={status}>
                                 {tasks
                                     .filter((t) => t.status === i)
                                     .map((t, iTask) => (

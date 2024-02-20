@@ -489,13 +489,13 @@ export default function BoardEditView({
                     {dayjs(board.updated_at).format("LLL")}
                 </p>
                 <p className="flex flex-row gap-4">
-                    {/* <SecondaryButton
+                    <SecondaryButton
                         as={Link}
                         href={route("boards.tasks.index", { board: board.id })}
                         className="border border-gray-300"
                     >
                         <i className="bi-clipboard mr-2"></i> Tugas
-                    </SecondaryButton> */}
+                    </SecondaryButton>
                 </p>
                 <div className="flex flex-row gap-3 flex-wrap">
                     {collaborators.map((user, i) => (

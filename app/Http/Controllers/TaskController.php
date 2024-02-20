@@ -7,6 +7,7 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
 class TaskController extends Controller
@@ -66,7 +67,7 @@ class TaskController extends Controller
 
         $request->merge(["created_by" => $request->user()->id]);
 
-        $valid = $request->validate([
+        $validationArr = [
             "title" => "required|string",
             "description" => "nullable|string",
             "status" => "sometimes|required|in:" . implode(",", [
@@ -85,13 +86,18 @@ class TaskController extends Controller
                 Task::HIGH,
             ]),
             "due_start" => "nullable|date",
-            "due_end" => "nullable|date|after_or_equal:due_start",
+            "due_end" => "nullable|date",
             "board_id" => "required|exists:boards,id",
             "assignee" => "nullable|array",
             "assignee.*" => "nullable|exists:users,id",
             "people_in_charge" => "nullable|array",
             "people_in_charge.*" => "nullable|exists:users,id",
-        ]);
+        ];
+
+        if ($request->filled("date_start")) {
+            $validationArr["due_end"] .= "|after_or_equal:due_start";
+        }
+        $valid = $request->validate($validationArr);
 
         try {
             DB::beginTransaction();
@@ -142,7 +148,7 @@ class TaskController extends Controller
 
         $request->merge(["created_by" => $request->user()->id]);
 
-        $valid = $request->validate([
+        $validationArr = [
             "title" => "sometimes|required|string",
             "description" => "sometimes|nullable|string",
             "status" => "sometimes|required|in:" . implode(",", [
@@ -167,7 +173,10 @@ class TaskController extends Controller
             "assignee.*" => "sometimes|nullable|exists:users,id",
             "people_in_charge" => "sometimes|nullable|array",
             "people_in_charge.*" => "sometimes|nullable|exists:users,id",
-        ]);
+        ];
+        $validator = Validator::make($request->all(), $validationArr);
+
+        $valid = $request->validate($validationArr);
 
         try {
             DB::beginTransaction();
@@ -178,6 +187,10 @@ class TaskController extends Controller
             $task->peopleInCharge()->sync($request->input("people_in_charge", []));
 
             DB::commit();
+
+            if ($request->expectsJson()) {
+                return response()->json($task);
+            }
 
             return to_route("boards.tasks.index", ["board" => $valid["board_id"]]);
         } catch (\Throwable $th) {

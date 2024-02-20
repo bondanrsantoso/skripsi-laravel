@@ -25,25 +25,26 @@ export default function TaskEditor({
     onSubmit,
 }) {
     const [assignee, setAssignee] = useState(
-        task?.assignee || defaultUser ? [defaultUser] : []
+        task?.assignee || (defaultUser ? [defaultUser] : [])
     );
 
     const [peopleInCharge, setPeopleInCharge] = useState(
         task?.people_in_charge || []
     );
 
-    const { data, setData, post, put, processing } = useForm({
-        title: task?.title || "",
-        description: task?.description | "",
-        status: task?.status || 0,
-        is_confirmed: task?.is_confirmed || false,
-        priority: task?.priority || 0,
-        due_start: task?.due_start || null,
-        due_end: task?.due_end || null,
-        board_id: task?.board_id || boardId,
-        assignee: assignee.map((a) => a.id),
-        people_in_charge: peopleInCharge.map((p) => p.id),
-    });
+    const { data, setData, post, put, processing, recentlySuccessful } =
+        useForm({
+            title: task?.title || "",
+            description: task?.description || "",
+            status: task?.status || 0,
+            is_confirmed: task?.is_confirmed || false,
+            priority: task?.priority || 0,
+            due_start: task?.due_start || null,
+            due_end: task?.due_end || null,
+            board_id: task?.board_id || boardId,
+            assignee: assignee.map((a) => a.id),
+            people_in_charge: peopleInCharge.map((p) => p.id),
+        });
 
     useEffect(() => {
         setData(
@@ -58,6 +59,12 @@ export default function TaskEditor({
             assignee.map((p) => p.id)
         );
     }, [assignee]);
+
+    useEffect(() => {
+        if (recentlySuccessful) {
+            onSubmit();
+        }
+    }, [recentlySuccessful]);
 
     // Assignee search
     const [userSearch, setUserSearch] = useState("");
@@ -276,7 +283,7 @@ export default function TaskEditor({
                     <Select
                         value={data.status}
                         className="w-full"
-                        onChange={(e) => setData("status", e.target.value)}
+                        onChange={(e) => setData("status", e.target.value - 0)}
                     >
                         {statuses.map((s, i) => (
                             <option value={i} key={i} className="text-black">
@@ -290,7 +297,9 @@ export default function TaskEditor({
                     <Select
                         value={data.priority}
                         className="w-full"
-                        onChange={(e) => setData("priority", e.target.value)}
+                        onChange={(e) =>
+                            setData("priority", e.target.value - 0)
+                        }
                     >
                         {priorities.map((s, i) => (
                             <option value={i} key={i} className="text-black">

@@ -13,6 +13,9 @@ export default {
 
     theme: {
         extend: {
+            colors: {
+                dim: "rgba(0,0,0,0.6)",
+            },
             fontFamily: {
                 sans: [
                     "Inter",
