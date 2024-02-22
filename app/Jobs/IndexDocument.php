@@ -47,6 +47,7 @@ class IndexDocument implements ShouldQueue
             ->post(env("AI_BACKEND_BASEURL") . IndexDocument::INDEX_DOC_VECTOR, [
                 "board_id" => $this->board_id,
                 "user_id" => $this->user_id,
+                "file_id" => $this->artifact->id,
             ]);
 
         $this->artifact->text_content = $splitDocumentResponse->json("parsed_text", null);

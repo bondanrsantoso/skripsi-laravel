@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Http;
 
 class Artifact extends Model
 {
@@ -90,6 +91,28 @@ class Artifact extends Model
             "board_id",
             "id",
             "id"
+        );
+    }
+
+    public function removeVectorIndex(int $boardId = null): void
+    {
+        $removeIndexURL = "/indexer/removeIndex/{$this->id}";
+        $params = [
+            "user_id" => $this->owner_id,
+        ];
+        if ($boardId !== null) {
+            $params["board_id"] = $boardId;
+        }
+
+        $queryParams = collect($params)
+            ->map(fn ($value, $key) => "{$key}={$value}")
+            ->values()
+            ->implode("&");
+
+        $removeIndexURL .= "?{$queryParams}";
+
+        $removeIndexResponse = Http::timeout(240)->delete(
+            env("AI_BACKEND_BASEURL") . $removeIndexURL
         );
     }
 }

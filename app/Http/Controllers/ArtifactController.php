@@ -137,7 +137,10 @@ class ArtifactController extends Controller
      */
     public function destroy(Board $board, Artifact $artifact)
     {
+        $artifact->removeVectorIndex($board->id);
         $board->artifacts()->detach($artifact->id);
+
+        $artifact->delete();
 
         return to_route("boards.edit", ["board" => $board->id]);
     }
