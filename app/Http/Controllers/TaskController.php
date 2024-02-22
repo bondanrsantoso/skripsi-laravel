@@ -37,7 +37,7 @@ class TaskController extends Controller
             });
         }
 
-        $tasks  = $taskQuery->get();
+        $tasks  = $taskQuery->with(["owner", "assignee", "peopleInCharge"])->get();
 
         return Inertia::render("Task/Index", [
             "statusLabels" => $statusLabels,
@@ -142,6 +142,10 @@ class TaskController extends Controller
      */
     public function update(Request $request, Board $board, Task $task)
     {
+        if (!$task->is_editable) {
+            abort(403);
+        }
+
         if ($board) {
             $request->merge(["board_id" => $board->id]);
         }
@@ -183,8 +187,12 @@ class TaskController extends Controller
 
             $task->update($valid);
 
-            $task->assignee()->sync($request->input("assignee", []));
-            $task->peopleInCharge()->sync($request->input("people_in_charge", []));
+            if ($request->exists("assignee")) {
+                $task->assignee()->sync($request->input("assignee", []));
+            }
+            if ($request->exists("people_in_charge")) {
+                $task->peopleInCharge()->sync($request->input("people_in_charge", []));
+            }
 
             DB::commit();
 
@@ -202,8 +210,14 @@ class TaskController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Task $task)
+    public function destroy(Board $board, Task $task)
     {
-        //
+        if (!$task->is_deletable) {
+            abort(403);
+        }
+
+        $task->delete();
+
+        return to_route("boards.tasks.index", ["board" => $board->id]);
     }
 }

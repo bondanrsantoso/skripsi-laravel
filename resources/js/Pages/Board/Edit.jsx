@@ -461,7 +461,7 @@ export default function BoardEditView({
                     ?
                 </h1>
                 <p>
-                    {itemToBeDeletedIndex?.type === "file"
+                    {itemToBeDeletedIndex?.type === "text"
                         ? "Berkas"
                         : "Catatan"}{" "}
                     yang dihapus tidak dapat dikembalikan

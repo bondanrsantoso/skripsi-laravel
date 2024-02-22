@@ -51,6 +51,21 @@ class Task extends Model
         "board_id",
     ];
 
+    protected $appends = [
+        "priority_label",
+        "is_deletable",
+        "is_editable",
+        "can_be_confirmed",
+    ];
+
+    public function priorityLabel(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($_, $attributes) =>
+            Task::PriorityLabels[$attributes['priority']]
+        );
+    }
+
     public function canBeConfirmed(): Attribute
     {
         $task = $this;
@@ -82,9 +97,27 @@ class Task extends Model
                 return true;
             }
 
-            return $task->assignee()
+            $isEditable = $task->assignee()
                 ->where("users.id", Auth::user()->id)
                 ->first() !== null || $task->peopleInCharge()
+                ->where("users.id", Auth::user()->id)
+                ->first() !== null;
+            return $isEditable;
+        });
+    }
+
+    public function isDeletable(): Attribute
+    {
+        $task = $this;
+        return Attribute::make(get: function ($_, $attributes) use ($task) {
+            if (!Auth::check()) {
+                return false;
+            }
+            if ($attributes["created_by"] === Auth::user()->id) {
+                return true;
+            }
+
+            return $task->peopleInCharge()
                 ->where("users.id", Auth::user()->id)
                 ->first() !== null;
         });

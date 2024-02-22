@@ -111,6 +111,10 @@ export default function TaskEditor({
             <form
                 onSubmit={(e) => {
                     e.preventDefault();
+                    if (task !== null && !task?.is_editable) {
+                        return;
+                    }
+
                     task
                         ? put(
                               route("boards.tasks.update", {
@@ -127,11 +131,13 @@ export default function TaskEditor({
                     className="text-4xl border-0 border-b rounded-none w-full focus:ring-0"
                     placeholder="Judul"
                     value={data.title}
+                    disabled={task !== null && !task?.is_editable}
                     onChange={(e) => {
                         setData("title", e.target.value);
                     }}
                 />
                 <QuillEditor
+                    readOnly={task !== null && !task?.is_editable}
                     value={data.description}
                     onChange={(value) => setData("description", value)}
                     placeholder="Deskripsi tugas..."
@@ -157,55 +163,59 @@ export default function TaskEditor({
                                     className="rounded-full inline-block w-8 h-8"
                                 />
                                 <div className="inline-block">{user.name}</div>
-                                <button
-                                    type="button"
-                                    className="w-8 h-8 rounded-full rotate-45"
-                                    onClick={(e) => {
-                                        const assignees = assignee.slice(0);
-                                        assignees.splice(iUser, 1);
-                                        setAssignee(assignees);
-                                    }}
-                                >
-                                    <i className="bi-plus-lg text-lg"></i>
-                                </button>
+                                {(task?.is_deletable || task === null) && (
+                                    <button
+                                        type="button"
+                                        className="w-8 h-8 rounded-full rotate-45"
+                                        onClick={(e) => {
+                                            const assignees = assignee.slice(0);
+                                            assignees.splice(iUser, 1);
+                                            setAssignee(assignees);
+                                        }}
+                                    >
+                                        <i className="bi-plus-lg text-lg"></i>
+                                    </button>
+                                )}
                             </Pill>
                         ))}
                     </div>
-                    <Combobox
-                        className="relative"
-                        as="div"
-                        onChange={(user) => {
-                            const users = assignee.slice(0);
-                            if (!users.find((u) => u.id === user.id)) {
-                                users.push(user);
+                    {(task?.is_deletable || task === null) && (
+                        <Combobox
+                            className="relative"
+                            as="div"
+                            onChange={(user) => {
+                                const users = assignee.slice(0);
+                                if (!users.find((u) => u.id === user.id)) {
+                                    users.push(user);
 
-                                setAssignee(users);
-                            }
-                        }}
-                    >
-                        <Combobox.Input
-                            as={TextInput}
-                            defaultValue=""
-                            onChange={(e) => setUserSearch(e.target.value)}
-                            className="w-full"
-                            placeholder="Cari Pegawai..."
-                        />
+                                    setAssignee(users);
+                                }
+                            }}
+                        >
+                            <Combobox.Input
+                                as={TextInput}
+                                defaultValue=""
+                                onChange={(e) => setUserSearch(e.target.value)}
+                                className="w-full"
+                                placeholder="Cari Pegawai..."
+                            />
 
-                        <Combobox.Button className="absolute inset-y-0 right-3">
-                            <i className="bi-chevron-expand"></i>
-                        </Combobox.Button>
-                        <Combobox.Options className="absolute mt-2 max-h-60 w-full overflow-auto z-20">
-                            {searchedUsers.map((member) => (
-                                <Combobox.Option
-                                    className="cursor-pointer relative p-4 bg-white ui-selected:font-bold ui-active:bg-gray-300 dark:bg-gray-800 ui-active:dark:bg-gray-600"
-                                    key={member.id}
-                                    value={member}
-                                >
-                                    {member.name} ({member.email})
-                                </Combobox.Option>
-                            ))}
-                        </Combobox.Options>
-                    </Combobox>
+                            <Combobox.Button className="absolute inset-y-0 right-3">
+                                <i className="bi-chevron-expand"></i>
+                            </Combobox.Button>
+                            <Combobox.Options className="absolute mt-2 max-h-60 w-full overflow-auto z-20">
+                                {searchedUsers.map((member) => (
+                                    <Combobox.Option
+                                        className="cursor-pointer relative p-4 bg-white ui-selected:font-bold ui-active:bg-gray-300 dark:bg-gray-800 ui-active:dark:bg-gray-600"
+                                        key={member.id}
+                                        value={member}
+                                    >
+                                        {member.name} ({member.email})
+                                    </Combobox.Option>
+                                ))}
+                            </Combobox.Options>
+                        </Combobox>
+                    )}
                 </div>
                 <div className="space-y-1">
                     <h2 className="font-bold">Penanggung jawab</h2>
@@ -228,61 +238,67 @@ export default function TaskEditor({
                                     className="rounded-full inline-block w-8 h-8"
                                 />
                                 <div className="inline-block">{user.name}</div>
-                                <button
-                                    type="button"
-                                    className="w-8 h-8 rounded-full rotate-45"
-                                    onClick={(e) => {
-                                        const PICs = peopleInCharge.slice(0);
-                                        PICs.splice(iUser, 1);
-                                        setPeopleInCharge(PICs);
-                                    }}
-                                >
-                                    <i className="bi-plus-lg text-lg"></i>
-                                </button>
+                                {(task?.is_deletable || task === null) && (
+                                    <button
+                                        type="button"
+                                        className="w-8 h-8 rounded-full rotate-45"
+                                        onClick={(e) => {
+                                            const PICs =
+                                                peopleInCharge.slice(0);
+                                            PICs.splice(iUser, 1);
+                                            setPeopleInCharge(PICs);
+                                        }}
+                                    >
+                                        <i className="bi-plus-lg text-lg"></i>
+                                    </button>
+                                )}
                             </Pill>
                         ))}
                     </div>
-                    <Combobox
-                        className="relative"
-                        as="div"
-                        onChange={(user) => {
-                            const users = peopleInCharge.slice(0);
-                            if (!users.find((u) => u.id === user.id)) {
-                                users.push(user);
+                    {(task?.is_deletable || task === null) && (
+                        <Combobox
+                            className="relative"
+                            as="div"
+                            onChange={(user) => {
+                                const users = peopleInCharge.slice(0);
+                                if (!users.find((u) => u.id === user.id)) {
+                                    users.push(user);
 
-                                setPeopleInCharge(users);
-                            }
-                        }}
-                    >
-                        <Combobox.Input
-                            as={TextInput}
-                            defaultValue=""
-                            onChange={(e) => setUserSearch(e.target.value)}
-                            className="w-full"
-                            placeholder="Cari Pegawai..."
-                        />
+                                    setPeopleInCharge(users);
+                                }
+                            }}
+                        >
+                            <Combobox.Input
+                                as={TextInput}
+                                defaultValue=""
+                                onChange={(e) => setUserSearch(e.target.value)}
+                                className="w-full"
+                                placeholder="Cari Pegawai..."
+                            />
 
-                        <Combobox.Button className="absolute inset-y-0 right-3">
-                            <i className="bi-chevron-expand"></i>
-                        </Combobox.Button>
-                        <Combobox.Options className="absolute mt-2 max-h-60 w-full overflow-auto z-20">
-                            {searchedUsers.map((member) => (
-                                <Combobox.Option
-                                    className="relative p-4 bg-white ui-selected:font-bold ui-active:bg-gray-300 dark:bg-gray-800 ui-active:dark:bg-gray-600"
-                                    key={member.id}
-                                    value={member}
-                                >
-                                    {member.name} ({member.email})
-                                </Combobox.Option>
-                            ))}
-                        </Combobox.Options>
-                    </Combobox>
+                            <Combobox.Button className="absolute inset-y-0 right-3">
+                                <i className="bi-chevron-expand"></i>
+                            </Combobox.Button>
+                            <Combobox.Options className="absolute mt-2 max-h-60 w-full overflow-auto z-20">
+                                {searchedUsers.map((member) => (
+                                    <Combobox.Option
+                                        className="relative p-4 bg-white ui-selected:font-bold ui-active:bg-gray-300 dark:bg-gray-800 ui-active:dark:bg-gray-600"
+                                        key={member.id}
+                                        value={member}
+                                    >
+                                        {member.name} ({member.email})
+                                    </Combobox.Option>
+                                ))}
+                            </Combobox.Options>
+                        </Combobox>
+                    )}
                 </div>
                 <div className="space-y-i">
                     <InputLabel>Status</InputLabel>
                     <Select
                         value={data.status}
                         className="w-full"
+                        disabled={task !== null && !task?.is_editable}
                         onChange={(e) => setData("status", e.target.value - 0)}
                     >
                         {statuses.map((s, i) => (
@@ -300,6 +316,7 @@ export default function TaskEditor({
                         onChange={(e) =>
                             setData("priority", e.target.value - 0)
                         }
+                        disabled={task !== null && !task?.is_deletable}
                     >
                         {priorities.map((s, i) => (
                             <option value={i} key={i} className="text-black">
@@ -314,6 +331,7 @@ export default function TaskEditor({
                         type="datetime-local"
                         value={data.due_start}
                         className="w-full"
+                        disabled={task !== null && !task?.is_deletable}
                         onChange={(e) => setData("due_start", e.target.value)}
                     />
                 </div>
@@ -323,11 +341,17 @@ export default function TaskEditor({
                         type="datetime-local"
                         value={data.due_end}
                         className="w-full"
+                        disabled={task !== null && !task?.is_deletable}
                         onChange={(e) => setData("due_end", e.target.value)}
                     />
                 </div>
                 <div className="flex flex-row-reverse gap-3">
-                    <PrimaryButton type="submit" disabled={processing}>
+                    <PrimaryButton
+                        type="submit"
+                        disabled={
+                            processing || (task !== null && !task?.is_editable)
+                        }
+                    >
                         Simpan
                     </PrimaryButton>
                     <SecondaryButton
@@ -336,7 +360,7 @@ export default function TaskEditor({
                             onClose();
                         }}
                     >
-                        Batal
+                        Tutup
                     </SecondaryButton>
                 </div>
             </form>

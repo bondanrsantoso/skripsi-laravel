@@ -3,14 +3,17 @@ import SecondaryButton from "@/Components/SecondaryButton";
 import BoardLayout from "@/Layouts/BoardLayout";
 import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { Dialog } from "@headlessui/react";
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, Link, router, useForm } from "@inertiajs/react";
 import dayjs from "dayjs";
 import LocaleFormat from "dayjs/plugin/localizedFormat";
 import { twMerge } from "tailwind-merge";
 import TaskEditor from "./Edit";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import axios from "axios";
 import PrimaryButton from "@/Components/PrimaryButton";
+import Pill from "@/Components/Pill";
+import DangerButton from "@/Components/DangerButton";
+import ConfirmDialog from "@/Components/ConfirmDialog";
 
 dayjs.extend(LocaleFormat);
 
@@ -33,7 +36,7 @@ function TaskContainer({ children, statusId, status = "", ...props }) {
     );
 }
 
-function TaskItem({ task, onSelect, ...props }) {
+function TaskItem({ task, onSelect, onDelete, ...props }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
             id: task.id,
@@ -48,26 +51,76 @@ function TaskItem({ task, onSelect, ...props }) {
     return (
         <div
             className={twMerge(
-                "p-4 pt-0 rounded-md bg-slate-800",
+                "p-4 pt-0 rounded-md bg-slate-800 space-y-4",
                 isDragging ? "z-50" : ""
             )}
             style={style}
         >
-            <div
-                className="w-full h-4 mb-2 cursor-grab"
-                ref={setNodeRef}
-                {...attributes}
-                {...listeners}
-            >
-                <p className="w-full text-center">
-                    <i className="bi-grip-horizontal"></i>
-                </p>
-            </div>
+            {task.is_editable ? (
+                <div
+                    className="w-full h-4 mb-2 cursor-grab"
+                    ref={setNodeRef}
+                    {...attributes}
+                    {...listeners}
+                >
+                    <p className="w-full text-center">
+                        <i className="bi-grip-horizontal"></i>
+                    </p>
+                </div>
+            ) : (
+                <div className="mb-2 w-full h-4"></div>
+            )}
             <p className="font-bold">{task.title}</p>
+            <div className="flex flex-row flex-wrap gap-2">
+                <Pill
+                    className={twMerge(
+                        "font-bold",
+                        task.priority === 0
+                            ? "bg-gray-300"
+                            : task.priority === 1
+                            ? "bg-orange-300"
+                            : "bg-red-400"
+                    )}
+                >
+                    {task.priority_label}
+                </Pill>
+                {task.assignee.map((a) => (
+                    <Pill className="font-bold bg-blue-300">{a.name}</Pill>
+                ))}
+            </div>
             <p className="text-sm opacity-75">
-                Terakhir diubah: {dayjs(task.updated_at).format("LL")}
+                Terakhir diubah: {dayjs(task.updated_at).format("LLL")}
             </p>
-            <div className="mt-2 flex justify-end">
+            <p className="text-sm">
+                <span className="opacity-75">Dibuat Oleh:</span>
+                <Pill className="bg-blue-300 font-bold ml-2">
+                    {task.owner.name}
+                </Pill>
+            </p>
+            {(task.due_start || task.due_end) && (
+                <Fragment>
+                    <hr className="opacity-50" />
+                    <div className="space-y-1">
+                        {task.due_start && (
+                            <p className="text-sm opacity-75">
+                                Mulai : {dayjs(task.due_start).format("LLL")}
+                            </p>
+                        )}
+                        {task.due_end && (
+                            <p className="text-sm opacity-75">
+                                <i>Deadline</i> :{" "}
+                                {dayjs(task.due_end).format("LLL")}
+                            </p>
+                        )}
+                    </div>
+                </Fragment>
+            )}
+            <div className="mt-2 flex gap-2 justify-end">
+                {task.is_deletable && (
+                    <DangerButton type="button" onClick={onDelete}>
+                        Hapus
+                    </DangerButton>
+                )}
                 <SecondaryButton type="button" onClick={onSelect}>
                     Detail
                 </SecondaryButton>
@@ -86,9 +139,18 @@ export default function TaskView({
     ...props
 }) {
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [taskToBeDeleted, setTaskToBeDeleted] = useState(null);
     const [tasks, setTasks] = useState(taskData || []);
     const [needRefresh, setNeedRefresh] = useState(false);
+    const { delete: deleteTask, recentlySuccessful: deleteTaskOK } = useForm();
+
+    useEffect(() => {
+        if (deleteTaskOK) {
+            setTaskToBeDeleted(null);
+        }
+    }, [deleteTaskOK]);
 
     useEffect(() => {
         if (needRefresh) {
@@ -102,29 +164,29 @@ export default function TaskView({
         setTasks(taskData);
     }, [taskData]);
 
-    useEffect(() => {
-        if (
-            selectedTask !== null &&
-            typeof selectedTask.is_editable === "undefined"
-        ) {
-            axios
-                .get(
-                    route("boards.tasks.show", {
-                        board: activeBoard.id,
-                        task: selectedTask.id,
-                    })
-                )
-                .then((res) => {
-                    setSelectedTask(res.data);
-                    setShowEditDialog(true);
-                })
-                .catch((err) => {
-                    console.error(err);
+    // useEffect(() => {
+    //     if (
+    //         selectedTask !== null &&
+    //         typeof selectedTask?.is_editable === "undefined"
+    //     ) {
+    //         axios
+    //             .get(
+    //                 route("boards.tasks.show", {
+    //                     board: activeBoard.id,
+    //                     task: selectedTask.id,
+    //                 })
+    //             )
+    //             .then((res) => {
+    //                 setSelectedTask(res.data);
+    //                 setShowEditDialog(true);
+    //             })
+    //             .catch((err) => {
+    //                 console.error(err);
 
-                    setSelectedTask(null);
-                });
-        }
-    }, [selectedTask]);
+    //                 setSelectedTask(null);
+    //             });
+    //     }
+    // }, [selectedTask]);
 
     function handleDragEnd(e) {
         // Update task status to reflect new status
@@ -145,6 +207,15 @@ export default function TaskView({
         task.status = newStatus;
         setTasks(taskArr);
 
+        function revert() {
+            setTasks((taskArr) => {
+                const ts = taskArr.slice(0);
+                ts[taskIndex].status = oldStatus;
+
+                return ts;
+            });
+        }
+
         axios
             .put(
                 route("boards.tasks.update", {
@@ -160,7 +231,8 @@ export default function TaskView({
                 console.log("OK", res);
             })
             .catch((err) => {
-                router.reload();
+                revert();
+                // router.reload();
             });
     }
 
@@ -174,7 +246,7 @@ export default function TaskView({
             <Dialog
                 as="div"
                 className="fixed top-0 left-0 w-screen h-screen overflow-auto flex justify-center items-center bg-dim"
-                open={showEditDialog}
+                open={selectedTask !== null || showEditDialog}
                 onClose={() => {
                     // setShowCollaboratorEditor(false);
                 }}
@@ -202,6 +274,23 @@ export default function TaskView({
                     />
                 </Dialog.Panel>
             </Dialog>
+            <ConfirmDialog
+                open={taskToBeDeleted !== null}
+                onConfirm={() => {
+                    deleteTask(
+                        route("boards.tasks.destroy", {
+                            board: activeBoard.id,
+                            task: taskToBeDeleted?.id,
+                        })
+                    );
+                }}
+                onCancel={() => setSelectedTask(null)}
+            >
+                <h1 className="font-bold text-lg">
+                    Hapus {selectedTask?.title}?
+                </h1>
+                <p>Tugas yang dihapus tidak dapat dikembalikan</p>
+            </ConfirmDialog>
             <div className="space-y-6">
                 <SecondaryButton
                     as={Link}
@@ -218,7 +307,7 @@ export default function TaskView({
                     Buat Tugas Baru
                 </PrimaryButton>
                 <DndContext onDragEnd={handleDragEnd}>
-                    <div className="flex flex-row flex-wrap overflow-x-auto w-full min-h-[60vh] gap-3">
+                    <div className="flex flex-row flex-wrap overflow-x-hidden overflow-y-hidden w-full min-h-[60vh] gap-3">
                         {statusLabels.map((status, i) => (
                             <TaskContainer key={i} statusId={i} status={status}>
                                 {tasks
@@ -227,6 +316,9 @@ export default function TaskView({
                                         <TaskItem
                                             onSelect={() => {
                                                 setSelectedTask(t);
+                                            }}
+                                            onDelete={() => {
+                                                setTaskToBeDeleted(t);
                                             }}
                                             key={iTask}
                                             task={t}
