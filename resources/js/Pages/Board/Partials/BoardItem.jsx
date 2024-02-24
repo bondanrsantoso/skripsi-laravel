@@ -102,7 +102,7 @@ export default function BoardItem({
                                 Unduh berkas
                             </SecondaryButton>
                             <SecondaryButton
-                                as="a"
+                                as={Link}
                                 href={route("artifacts.show", {
                                     artifact: item.id,
                                 })}
