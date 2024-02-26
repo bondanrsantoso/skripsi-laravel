@@ -306,7 +306,7 @@ export default function BoardLayout({
     const [boardList, setBoardList] = useState([]);
 
     useEffect(() => {
-        if (boards.length === 0) {
+        if (boards.length === 0 && boardList.length === 0) {
             axios
                 .get(route("boards.index"), {
                     withCredentials: true,
@@ -316,7 +316,7 @@ export default function BoardLayout({
                     setBoardList(res.data);
                 });
         }
-    }, [boards]);
+    }, [boards, boardList]);
 
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-950 dark:text-white">
