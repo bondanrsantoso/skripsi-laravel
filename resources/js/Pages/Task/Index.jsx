@@ -51,7 +51,7 @@ function TaskItem({ task, onSelect, onDelete, ...props }) {
     return (
         <div
             className={twMerge(
-                "p-4 pt-0 rounded-md bg-slate-800 space-y-4",
+                "p-4 pt-0 rounded-md dark:bg-slate-800 bg-white space-y-4",
                 isDragging ? "z-50" : ""
             )}
             style={style}
